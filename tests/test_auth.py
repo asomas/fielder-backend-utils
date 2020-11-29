@@ -1,5 +1,6 @@
 from unittest import TestCase, mock
 from fielder_backend_utils import auth
+from rest_framework.exceptions import AuthenticationFailed
 
 class TestAuth(TestCase):
     @mock.patch('fielder_backend_utils.auth.FirebaseHelper')
@@ -11,7 +12,7 @@ class TestAuth(TestCase):
         # no authorization header
         request = mock.Mock()
         request.headers = {"X-Someting-Else": "something-else"}
-        self.assertRaises(RuntimeError, auth.auth_request_firebase, request)
+        self.assertRaises(AuthenticationFailed, auth.auth_request_firebase, request)
 
         # X-Forwarded-Authorization
         request = mock.Mock()
@@ -34,7 +35,7 @@ class TestAuth(TestCase):
         # no authorization header
         request = mock.Mock()
         request.headers = {"X-Someting-Else": "something-else"}
-        self.assertRaises(RuntimeError, auth.auth_request_oidc, request)
+        self.assertRaises(AuthenticationFailed, auth.auth_request_oidc, request)
 
         # Authorization
         request = mock.Mock()

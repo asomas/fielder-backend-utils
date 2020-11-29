@@ -3,8 +3,9 @@ import functools
 import google.oauth2.id_token
 import google.auth.transport.requests
 from typing import Tuple, Dict
-from firebase_admin.auth import UserRecord
 from .firebase import FirebaseHelper
+from firebase_admin.auth import UserRecord
+from rest_framework.exceptions import AuthenticationFailed
 
 import logging
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def auth_request_firebase(request) -> UserRecord:
         return firestore.authenticate(token)
     except Exception as e:
         logger.warning(e)
-        raise RuntimeError('invalid firebase authentication header')
+        raise AuthenticationFailed(detail='invalid firebase authentication header')
 
 def auth_request_oidc(request) -> dict:
     """
@@ -40,7 +41,7 @@ def auth_request_oidc(request) -> dict:
         return google.oauth2.id_token.verify_oauth2_token(token, req)
     except Exception as e:
         logger.warning(e)
-        raise RuntimeError('invalid oidc authorization header')
+        raise AuthenticationFailed(detail='invalid oidc authorization header')
 
 def auth(firebase: bool = True, oidc: bool = True):
     """
@@ -86,7 +87,7 @@ def auth(firebase: bool = True, oidc: bool = True):
                     print(e)
                     pass
             if not authenticated:
-                raise RuntimeError('invalid firebase & oidc authorization header')
+                raise AuthenticationFailed(detail='invalid firebase & oidc authorization header')
             
             # run req_handler
             return req_handler(*args, **kwargs)
