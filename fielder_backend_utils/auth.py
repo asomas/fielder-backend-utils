@@ -54,10 +54,6 @@ def auth(firebase: bool = True, oidc: bool = True):
     def decorator(req_handler):
         @functools.wraps(req_handler)
         def wrapper(*args, **kwargs):
-            # skip on test mode
-            if os.getenv('ASOMAS_SERVER_MODE','').lower() == 'test':
-                return req_handler(*args, **kwargs)
-
             # assume request object is one
             # of the args
             req = None
