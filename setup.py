@@ -4,6 +4,7 @@ install_requires = [
     'firebase-admin>=4.4.0',
     'google-auth>=1.23.0',
     'djangorestframework>=3.11.0',
+    'requests>=2.25.1',
 ]
 
 setup(
