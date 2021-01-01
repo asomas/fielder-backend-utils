@@ -1,4 +1,5 @@
 import os
+import jwt
 import functools
 import google.oauth2.id_token
 import google.auth.transport.requests
@@ -6,6 +7,7 @@ from typing import Tuple, Dict
 from .firebase import FirebaseHelper
 from firebase_admin.auth import UserRecord
 from rest_framework.exceptions import AuthenticationFailed
+from unittest import mock
 
 import logging
 logger = logging.getLogger(__name__)
@@ -22,7 +24,17 @@ def auth_request_firebase(request) -> UserRecord:
             token = request.headers["X-Forwarded-Authorization"].split(" ").pop()
         else:
             token = request.headers["Authorization"].split(" ").pop()
-        return firestore.authenticate(token)
+        if os.getenv('ASOMAS_SERVER_MODE', '').lower() in ['local', 'test']:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            user = mock.Mock()
+            user.uid = payload['user_id']
+            if 'phone_number' in payload:
+                user.phone_number = payload['phone_number']
+            if 'email' in payload:
+                user.email = payload['email']
+            return user
+        else:
+            return firestore.authenticate(token)
     except Exception as e:
         logger.warning(e)
         raise AuthenticationFailed(detail='invalid firebase authentication header')
@@ -37,8 +49,11 @@ def auth_request_oidc(request) -> dict:
     """
     try:
         token = request.headers["Authorization"].split(" ").pop()
-        req = google.auth.transport.requests.Request()
-        return google.oauth2.id_token.verify_oauth2_token(token, req)
+        if os.getenv('ASOMAS_SERVER_MODE', '').lower() in ['local', 'test']:
+            return jwt.decode(token, options={"verify_signature": False})
+        else:
+            req = google.auth.transport.requests.Request()
+            return google.oauth2.id_token.verify_oauth2_token(token, req)
     except Exception as e:
         logger.warning(e)
         raise AuthenticationFailed(detail='invalid oidc authorization header')

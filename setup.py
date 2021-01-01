@@ -1,9 +1,10 @@
 from setuptools import setup
 
 install_requires = [
+    'djangorestframework>=3.11.0',
     'firebase-admin>=4.4.0',
     'google-auth>=1.23.0',
-    'djangorestframework>=3.11.0',
+    'pyjwt>=2.0.0',
     'requests>=2.25.1',
 ]
 
