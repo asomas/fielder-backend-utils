@@ -46,6 +46,16 @@ class TestUtils(TestCase):
         }
         self.assertTrue(matches_recurrence(scheduled_date, recurrence, start_date))
 
+        # positive None (with hour)
+        start_date = datetime(2021,1,1,7)
+        scheduled_date = datetime(2021,1,1,8)
+        recurrence = {
+            'repeat_interval_type': None,
+            'interval_amount': 0,
+            'monday': False, 'tuesday': False, 'wednesday': False, 'thursday': False, 'friday': False, 'saturday': False, 'sunday': False,
+        }
+        self.assertTrue(matches_recurrence(scheduled_date, recurrence, start_date))
+
         # negative None
         start_date = datetime(2021,1,1)
         scheduled_date = datetime(2021,1,8)

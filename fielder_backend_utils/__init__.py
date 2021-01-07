@@ -59,7 +59,7 @@ def matches_recurrence(scheduled_date: datetime, recurrence: dict, start_date: d
         match (bool)
     """    
     if recurrence['repeat_interval_type'] == None:
-        return start_date == scheduled_date
+        return start_date.date() == scheduled_date.date()
 
     interval_type = recurrence['repeat_interval_type'].lower()    
     assert interval_type in ['daily', 'weekly'], 'only weekly, daily and None type supported'
