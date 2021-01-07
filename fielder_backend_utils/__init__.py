@@ -1,5 +1,5 @@
 import math
-from typing import List, Iterator
+from typing import List, Iterator, Dict, Any
 from datetime import datetime, timedelta
 
 WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
@@ -46,9 +46,9 @@ def next_weekday(d: datetime, weekday: int):
         days_ahead += 7
     return d + timedelta(days_ahead)
 
-def matches_reccurence(scheduled_date: datetime, recurrence: dict, start_date: datetime) -> bool:
+def matches_recurrence(scheduled_date: datetime, recurrence: dict, start_date: datetime) -> bool:
     """
-    Return True if a scheduled_date matches a reccurence rule that starts from start_date
+    Return True if a scheduled_date matches a recurrence rule that starts from start_date
     Currently only support weekly recurrence type
 
     Args:
@@ -58,13 +58,44 @@ def matches_reccurence(scheduled_date: datetime, recurrence: dict, start_date: d
     Returns:
         match (bool)
     """    
-    assert recurrence['repeat_interval_type'].lower() == 'weekly', 'only weekly type supported'
-    if not recurrence[WEEKDAYS[scheduled_date.weekday()]]:
-        return False
-    else:
-        first_scheduled_date = next_weekday(start_date, scheduled_date.weekday())
-        week_delta = math.ceil((scheduled_date - first_scheduled_date).days / 7)
-        return week_delta % recurrence['interval_amount'] == 0
+    if recurrence['repeat_interval_type'] == None:
+        return start_date == scheduled_date
+
+    interval_type = recurrence['repeat_interval_type'].lower()    
+    assert interval_type in ['daily', 'weekly'], 'only weekly, daily and None type supported'
+
+    interval_amount = recurrence['interval_amount']
+    assert interval_amount > 0, 'interval amount must be > 0'
+
+    if interval_type == 'daily':
+        delta_days = (scheduled_date - start_date).days
+        return delta_days % interval_amount == 0
+
+    elif interval_type == 'weekly':
+        if not recurrence[WEEKDAYS[scheduled_date.weekday()]]:
+            return False
+        else:
+            first_scheduled_date = next_weekday(start_date, scheduled_date.weekday())
+            # week_delta = math.ceil((scheduled_date - first_scheduled_date).days / 7)
+            week_delta = round((scheduled_date - first_scheduled_date).days / 7)
+            return week_delta % interval_amount == 0
+
+def matches_shift(dt: datetime, shift_data: Dict[str, Any]) -> bool:
+    """
+    Return True if a given datetime dt is within job_shifts start_date-end_date,
+    and matches the weekday matches the recurrence
+
+    Args:
+        dt (datetime): scheduled date
+        shift_data (dict): job_shifts data
+    Returns:
+        match (bool)
+    """
+    match = False
+    if shift_data['start_date'] <= dt and dt <= shift_data['end_date']:
+        match = matches_recurrence(dt, shift_data['recurrence'], shift_data['start_date'])
+    return match
+
 
 if __name__ == '__main__':
     pass
