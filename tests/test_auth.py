@@ -64,6 +64,8 @@ class TestAuth(TestCase):
 
     def test_auth_request_oidc(self):
         os.environ["ASOMAS_SERVER_MODE"] = 'local'
+
+        # should accept valid header
         payload = {
             "email": "fielder-dev-285511@appspot.gserviceaccount.com",
         }
@@ -72,4 +74,11 @@ class TestAuth(TestCase):
         request.headers = {"Authorization": "Bearer " + token}
         token_data = auth.auth_request_oidc(request)
         self.assertDictEqual(token_data, payload)
+
+        # should accept no authentication header
+        request = mock.Mock()
+        request.headers = {}
+        token_data = auth.auth_request_oidc(request)        
+        self.assertDictEqual(token_data, {"email": "fielder-emulator@appspot.gserviceaccount.com"})
+
         del os.environ["ASOMAS_SERVER_MODE"]

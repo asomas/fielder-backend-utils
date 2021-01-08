@@ -47,11 +47,18 @@ def auth_request_oidc(request) -> dict:
     Returns:
         data (dict): data from token
     """
-    try:
-        token = request.headers["Authorization"].split(" ").pop()
+    try:        
         if os.getenv('ASOMAS_SERVER_MODE', '').lower() in ['local', 'test']:
+            # pubsub emulator doesn't send authorization header
+            # https://github.com/googleapis/google-cloud-java/issues/1381#issuecomment-259427949
+            if 'Authorization' in request.headers:
+                token = request.headers["Authorization"].split(" ").pop()
+            else:
+                # {"email": "fielder-emulator@appspot.gserviceaccount.com"}
+                token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImZpZWxkZXItZW11bGF0b3JAYXBwc3BvdC5nc2VydmljZWFjY291bnQuY29tIn0.PRDpQejYLbKTSrkXsq_LxjF_u_LeeQJpKB_1o1h7jqo'
             return jwt.decode(token, options={"verify_signature": False})
         else:
+            token = request.headers["Authorization"].split(" ").pop()
             req = google.auth.transport.requests.Request()
             return google.oauth2.id_token.verify_oauth2_token(token, req)
     except Exception as e:
