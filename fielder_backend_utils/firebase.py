@@ -7,7 +7,9 @@ from firebase_admin import firestore, auth
 from google.cloud.firestore_v1 import document, transaction, collection, field_path
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class FirebaseHelper:
     """
