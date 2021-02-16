@@ -94,25 +94,10 @@ def auth(firebase: bool = True, oidc: bool = True):
                 raise RuntimeError("no rest_framework.request.Request in args")
 
             # authenticate
-            authenticated = not (firebase or oidc)
             if firebase:
-                try:
-                    req.firebase_user = auth_request_firebase(req)
-                    authenticated = True
-                except Exception as e:
-                    print(e)
-                    pass
+                req.firebase_user = auth_request_firebase(req)
             if oidc:
-                try:
-                    req.oidc_data = auth_request_oidc(req)
-                    authenticated = True
-                except Exception as e:
-                    print(e)
-                    pass
-            if not authenticated:
-                raise AuthenticationFailed(
-                    detail="invalid firebase & oidc authorization header"
-                )
+                req.oidc_data = auth_request_oidc(req)
 
             # run req_handler
             return req_handler(*args, **kwargs)
