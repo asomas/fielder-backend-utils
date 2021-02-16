@@ -300,7 +300,7 @@ class TestShift(TestCase):
                 "sunday": False,
             },
         }
-        self.assertEqual(count_shift_days(shift_data), 7)
+        self.assertEqual(count_shift_days(shift_data), 8)
 
         # daily every 2 days
         shift_data = {
@@ -464,6 +464,24 @@ class TestShift(TestCase):
         }
         self.assertEqual(count_shift_days(shift_data), 9)
 
+        # weekly III check start date & end date inclusiveness
+        shift_data = {
+            "start_date": datetime(2021, 2, 1),  # Friday
+            "end_date": datetime(2021, 2, 22),  # Friday
+            "recurrence": {
+                "repeat_interval_type": "Weekly",
+                "interval_amount": 1,
+                "monday": True,
+                "tuesday": False,
+                "wednesday": False,
+                "thursday": False,
+                "friday": False,
+                "saturday": False,
+                "sunday": False,
+            },
+        }
+        self.assertEqual(count_shift_days(shift_data), 4)
+
         # bi-weekly
         shift_data = {
             "start_date": datetime(2021, 1, 1),
@@ -499,3 +517,21 @@ class TestShift(TestCase):
             },
         }
         self.assertEqual(count_shift_days(shift_data), 9)
+
+        # bi-weekly III  check start date & end date inclusiveness
+        shift_data = {
+            "start_date": datetime(2021, 1, 1),  # Friday
+            "end_date": datetime(2021, 3, 12),  # Friday
+            "recurrence": {
+                "repeat_interval_type": "Weekly",
+                "interval_amount": 2,
+                "monday": False,
+                "tuesday": False,
+                "wednesday": False,
+                "thursday": False,
+                "friday": True,
+                "saturday": False,
+                "sunday": False,
+            },
+        }
+        self.assertEqual(count_shift_days(shift_data), 6)

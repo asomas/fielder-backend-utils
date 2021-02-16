@@ -159,10 +159,7 @@ def count_shift_days(shift_data: Dict[str, Any]) -> int:
 
     if interval_type == "daily":
         delta_days = (end_date - start_date).days
-        if interval_amount == 1:
-            return delta_days
-        else:
-            return delta_days // interval_amount + 1
+        return delta_days // interval_amount + 1
 
     elif interval_type == "weekly":
         total_days = 0
