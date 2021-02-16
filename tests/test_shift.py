@@ -466,8 +466,8 @@ class TestShift(TestCase):
 
         # weekly III check start date & end date inclusiveness
         shift_data = {
-            "start_date": datetime(2021, 2, 1),  # Friday
-            "end_date": datetime(2021, 2, 22),  # Friday
+            "start_date": datetime(2021, 2, 1),  # Monday
+            "end_date": datetime(2021, 2, 22),  # Monday
             "recurrence": {
                 "repeat_interval_type": "Weekly",
                 "interval_amount": 1,
