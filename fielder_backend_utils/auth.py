@@ -1,15 +1,21 @@
-import os
-import jwt
 import functools
-import google.oauth2.id_token
-import google.auth.transport.requests
-from typing import Tuple, Dict
-from .firebase import FirebaseHelper
-from firebase_admin.auth import UserRecord
-from rest_framework.exceptions import AuthenticationFailed
+import logging
+import os
+from typing import Dict, List, Tuple
 from unittest import mock
 
-import logging
+import google.auth.transport.requests
+import google.oauth2.id_token
+import jwt
+from firebase_admin.auth import UserRecord
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
+
+from .firebase import FirebaseHelper
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +102,79 @@ def auth(firebase: bool = True, oidc: bool = True):
             # authenticate
             if firebase:
                 req.firebase_user = auth_request_firebase(req)
+            if oidc:
+                req.oidc_data = auth_request_oidc(req)
+
+            # run req_handler
+            return req_handler(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def authorize(request, restricted_roles):
+    fs = FirebaseHelper.getInstance()
+
+    if "employer_id" not in request.data:
+        raise ValidationError({"employer_id": ["This field is required."]})
+
+    employer_ref = fs.db.collection("employers").document(request.data["employer_id"])
+    employer_snapshot = employer_ref.get()
+    if not employer_snapshot.exists:
+        raise NotFound(detail="Employer not found.")
+
+    employer_user_ref = fs.db.collection("employer_users").document(
+        request.firebase_user.uid
+    )
+
+    employer_user_snapshot = employer_user_ref.get()
+    if not employer_user_snapshot.exists:
+        raise NotFound(detail="Employer User not found.")
+
+    employer_user_data = employer_user_snapshot.to_dict()
+    organizations = employer_user_data.get("organizations")
+    if (not isinstance(organizations, dict)) or (
+        not organizations.get(employer_ref.id, None)
+    ):
+        raise PermissionDenied(detail="You are not part of this organization.")
+
+    role = organizations[employer_ref.id].get("role", None)
+    if (not role) or (role not in restricted_roles):
+        raise PermissionDenied(
+            detail="You don't have enough permission for that action."
+        )
+
+
+def auth_employer_user(*, restricted_roles: List, firebase: bool, oidc: bool):
+    """
+    Auth decorator that supports firebase and OIDC token
+
+    Args:
+        restricted_roles (List): ["owner", "admin", "hr", "manager", "supervisor"]
+        firebase (bool): if True, authenticate firebase token
+        oidc (bool): if True, authenticate OIDC token
+    """
+
+    def decorator(req_handler):
+        @functools.wraps(req_handler)
+        def wrapper(*args, **kwargs):
+            # assume request object is one
+            # of the args
+            req = None
+            for arg in args:
+                if type(arg).__name__.lower() == "request":
+                    req = arg
+                    req.firebase_user = None
+                    req.oidc_data = None
+                    break
+            if not req:
+                raise RuntimeError("no rest_framework.request.Request in args")
+
+            # authenticate
+            if firebase:
+                req.firebase_user = auth_request_firebase(req)
+                authorize(req, restricted_roles)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 
