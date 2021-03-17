@@ -40,6 +40,8 @@ def auth_request_firebase(request) -> UserRecord:
                 user.phone_number = payload["phone_number"]
             if "email" in payload:
                 user.email = payload["email"]
+            if "display_name" in payload:
+                user.display_name = payload["display_name"]
             return user
         else:
             return firestore.authenticate(token)
