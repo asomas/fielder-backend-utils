@@ -38,23 +38,23 @@ When environment variable `ASOMAS_SERVER_MODE` is set to `local` or `test`, `@au
 
 ```
 {
-   "user_id": "xTzBP55WORk35TdZLIyFMtdD8N1a", 
+   "user_id": "xTzBP55WORk35TdZLIyFMtdD8N1a",
    "phone_number": "+441122334455"
 }
 ```
 
 > `user_id` corresponds to `workers` document id
 
-**Fielder Employer**
+**Fielder Organisation**
 
 ```
 {
-   "user_id": "xTzBP55WORk35TdZLIyFMtdD8N1a", 
+   "user_id": "xTzBP55WORk35TdZLIyFMtdD8N1a",
    "email": "jane@asomas.com"
 }
 ```
 
-> `user_id` corresponds to `employers` document id
+> `user_id` corresponds to `organisations` document id
 
 **OIDC/Service-to-service**
 

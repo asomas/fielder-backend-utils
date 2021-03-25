@@ -2,6 +2,8 @@ import math
 from typing import List, Iterator, Dict, Any
 from datetime import datetime, timedelta
 
+__version__ = "1.0.5"
+
 WEEKDAYS = [
     "monday",
     "tuesday",
