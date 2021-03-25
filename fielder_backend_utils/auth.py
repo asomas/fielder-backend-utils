@@ -137,13 +137,13 @@ def authorize(request, restricted_roles):
         raise NotFound(detail="Organisation User not found.")
 
     organisation_user_data = organisation_user_snapshot.to_dict()
-    organizations = organisation_user_data.get("organizations")
-    if (not isinstance(organizations, dict)) or (
-        not organizations.get(organisation_ref.id, None)
+    organisations = organisation_user_data.get("organisations")
+    if (not isinstance(organisations, dict)) or (
+        not organisations.get(organisation_ref.id, None)
     ):
-        raise PermissionDenied(detail="You are not part of this organization.")
+        raise PermissionDenied(detail="You are not part of this organisation.")
 
-    role = organizations[organisation_ref.id].get("role", None)
+    role = organisations[organisation_ref.id].get("role", None)
     if (not role) or (role not in restricted_roles):
         raise PermissionDenied(
             detail="You don't have enough permission for that action."
