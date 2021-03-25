@@ -118,37 +118,39 @@ def auth(firebase: bool = True, oidc: bool = True):
 def authorize(request, restricted_roles):
     fs = FirebaseHelper.getInstance()
 
-    if "employer_id" not in request.data:
-        raise ValidationError({"employer_id": ["This field is required."]})
+    if "organisation_id" not in request.data:
+        raise ValidationError({"organisation_id": ["This field is required."]})
 
-    employer_ref = fs.db.collection("employers").document(request.data["employer_id"])
-    employer_snapshot = employer_ref.get()
-    if not employer_snapshot.exists:
-        raise NotFound(detail="Employer not found.")
+    organisation_ref = fs.db.collection("organisations").document(
+        request.data["organisation_id"]
+    )
+    organisation_snapshot = organisation_ref.get()
+    if not organisation_snapshot.exists:
+        raise NotFound(detail="Organisation not found.")
 
-    employer_user_ref = fs.db.collection("employer_users").document(
+    organisation_user_ref = fs.db.collection("organisation_users").document(
         request.firebase_user.uid
     )
 
-    employer_user_snapshot = employer_user_ref.get()
-    if not employer_user_snapshot.exists:
-        raise NotFound(detail="Employer User not found.")
+    organisation_user_snapshot = organisation_user_ref.get()
+    if not organisation_user_snapshot.exists:
+        raise NotFound(detail="Organisation User not found.")
 
-    employer_user_data = employer_user_snapshot.to_dict()
-    organizations = employer_user_data.get("organizations")
+    organisation_user_data = organisation_user_snapshot.to_dict()
+    organizations = organisation_user_data.get("organizations")
     if (not isinstance(organizations, dict)) or (
-        not organizations.get(employer_ref.id, None)
+        not organizations.get(organisation_ref.id, None)
     ):
         raise PermissionDenied(detail="You are not part of this organization.")
 
-    role = organizations[employer_ref.id].get("role", None)
+    role = organizations[organisation_ref.id].get("role", None)
     if (not role) or (role not in restricted_roles):
         raise PermissionDenied(
             detail="You don't have enough permission for that action."
         )
 
 
-def auth_employer_user(*, restricted_roles: List, firebase: bool, oidc: bool):
+def auth_organisation_user(*, restricted_roles: List, firebase: bool, oidc: bool):
     """
     Auth decorator that supports firebase and OIDC token
 
