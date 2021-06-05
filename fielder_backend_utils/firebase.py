@@ -5,6 +5,7 @@ import google.auth.credentials
 from datetime import datetime, timezone, timedelta
 from firebase_admin import firestore, auth
 from google.cloud.firestore_v1 import document, transaction, collection, field_path
+from google.cloud.firestore import Client
 
 import logging
 
@@ -19,14 +20,14 @@ class FirebaseHelper:
     _instance = None
 
     @staticmethod
-    def getInstance(db=None):
+    def getInstance(db: Client = None):
         if FirebaseHelper._instance is None:
             with threading.Lock():
                 if FirebaseHelper._instance is None:
                     FirebaseHelper._instance = FirebaseHelper(db)
         return FirebaseHelper._instance
 
-    def __init__(self, db=None):
+    def __init__(self, db: Client = None):
         if not db:
             if os.getenv("FIRESTORE_PROJECT_ID") and os.getenv(
                 "FIRESTORE_EMULATOR_HOST"
@@ -46,7 +47,7 @@ class FirebaseHelper:
                 if not firebase_admin._apps:
                     firebase_admin.initialize_app()
                 db = firestore.client()
-        self.db = db
+        self.db = db  # type: Client
 
     def authenticate(self, id_token: str) -> auth.UserRecord:
         """
