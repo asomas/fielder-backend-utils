@@ -2,7 +2,7 @@ import math
 from typing import List, Iterator, Dict, Any
 from datetime import datetime, timedelta
 
-__version__ = "1.0.9"
+__version__ = "1.0.11"
 
 WEEKDAYS = [
     "monday",
@@ -54,7 +54,7 @@ def next_weekday(d: datetime, weekday: int):
         next_weekday (datetime): next weekday from d with given week_interval
     """
     days_ahead = weekday - d.weekday()
-    if days_ahead < 0:
+    if days_ahead <= 0:
         # Target day already happened this week
         days_ahead += 7
     return d + timedelta(days_ahead)
