@@ -2,7 +2,7 @@ import math
 from typing import List, Iterator, Dict, Any
 from datetime import datetime, timedelta
 
-__version__ = "1.0.12"
+__version__ = "1.0.13"
 
 WEEKDAYS = [
     "monday",
@@ -175,6 +175,20 @@ def count_shift_days(shift_data: Dict[str, Any]) -> int:
                 else:
                     total_days += week_delta // interval_amount + 1
         return total_days
+
+
+def count_shift_hours(shift_pattern_data: dict):
+    """
+    Return the number of hours in this shift. If total_shift_count doesn't exists,
+    It will be calculated but not saved.
+    Args:
+        shift_pattern_data: shift pattern data dict
+    Return:
+        total shift pattern hours
+    """
+    return shift_pattern_data.get(
+        "total_shift_count", count_shift_days(shift_pattern_data)
+    ) * ((shift_pattern_data["end_time"] - shift_pattern_data["start_time"]) / 3600)
 
 
 if __name__ == "__main__":
