@@ -7,6 +7,7 @@ from fielder_backend_utils import (
     matches_recurrence,
     matches_shift,
     count_shift_days,
+    count_shift_hours,
 )
 
 
@@ -535,3 +536,45 @@ class TestShift(TestCase):
             },
         }
         self.assertEqual(count_shift_days(shift_data), 6)
+
+    def test_count_shift_hours(self):
+        # with total count
+        shift_data = {
+            "start_date": datetime(2021, 1, 1),
+            "end_date": datetime(2021, 1, 22),
+            "recurrence": {
+                "repeat_interval_type": "Weekly",
+                "interval_amount": 1,
+                "monday": True,
+                "tuesday": True,
+                "wednesday": True,
+                "thursday": False,
+                "friday": False,
+                "saturday": False,
+                "sunday": False,
+            },
+            "total_shift_count": 9,
+            "start_time": 28800,
+            "end_time": 43200,
+        }
+        self.assertEqual(count_shift_hours(shift_data), 36)
+
+        # without total count
+        shift_data = {
+            "start_date": datetime(2021, 1, 1),
+            "end_date": datetime(2021, 1, 22),
+            "recurrence": {
+                "repeat_interval_type": "Weekly",
+                "interval_amount": 1,
+                "monday": True,
+                "tuesday": True,
+                "wednesday": True,
+                "thursday": False,
+                "friday": False,
+                "saturday": False,
+                "sunday": False,
+            },
+            "start_time": 28800,
+            "end_time": 43200,
+        }
+        self.assertEqual(count_shift_hours(shift_data), 36)
