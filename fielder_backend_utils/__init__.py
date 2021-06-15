@@ -1,8 +1,9 @@
-import math
-from typing import List, Iterator, Dict, Any
+from fielder_backend_utils.firebase import FirebaseHelper
+from typing import List, Iterator, Dict, Any, OrderedDict, Tuple
 from datetime import datetime, timedelta
+from google.cloud.firestore import DocumentReference, GeoPoint
 
-__version__ = "1.0.13"
+__version__ = "1.0.14"
 
 WEEKDAYS = [
     "monday",
@@ -189,6 +190,53 @@ def count_shift_hours(shift_pattern_data: dict):
     return shift_pattern_data.get(
         "total_shift_count", count_shift_days(shift_pattern_data)
     ) * ((shift_pattern_data["end_time"] - shift_pattern_data["start_time"]) / 3600)
+
+
+def get_with_default(dictionary, key, default_val):
+    val = dictionary.get(key, default_val)
+    return val if val is not None else default_val
+
+
+def generate_location(
+    loc_data: Dict[str, Any], organisation_ref: DocumentReference
+) -> Dict[str, Any]:
+    """
+    Generate location data
+
+    Args:
+        loc_data: initial location data
+        organisation_ref: organisation document reference
+    Returns:
+        loc_data: location data
+    """
+    c = loc_data["coords"]
+    loc_data["coords"] = GeoPoint(c["lat"], c["lng"])
+    loc_data["organisation_ref"] = organisation_ref
+    loc_data["archived"] = False
+    loc_data["is_live"] = True
+    short_name = (
+        get_with_default(loc_data, "name")
+        if loc_data.get("name", None) is not None
+        else f"{loc_data.get('building', '')} {loc_data.get('street', '')}"
+    )
+    short_name = (
+        loc_data.get("name", None)
+        if loc_data.get("name", None) is not None
+        else f"{get_with_default(loc_data, 'building', '')} {get_with_default(loc_data, 'street', '')}"
+    )
+    loc_data["short_name"] = short_name
+    loc_data["icon_url"] = None  # TODO
+    db = FirebaseHelper.getInstance().db
+
+    # Order the keys to create formatted_address
+    order_of_keys = ["building", "street", "city", "county", "postal_code", "country"]
+    loc_data["address"] = OrderedDict(
+        [(key, loc_data["address"][key]) for key in order_of_keys]
+    )
+    formatted_address = ", ".join([v for k, v in loc_data["address"].items() if v])
+    loc_data["formatted_address"] = formatted_address if formatted_address else None
+
+    return loc_data
 
 
 if __name__ == "__main__":
