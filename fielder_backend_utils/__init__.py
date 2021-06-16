@@ -1,9 +1,8 @@
-from fielder_backend_utils.firebase import FirebaseHelper
-from typing import List, Iterator, Dict, Any, OrderedDict, Tuple
+from typing import List, Iterator, Dict, Any, OrderedDict
 from datetime import datetime, timedelta
 from google.cloud.firestore import DocumentReference, GeoPoint
 
-__version__ = "1.0.14"
+__version__ = "1.0.15"
 
 WEEKDAYS = [
     "monday",
@@ -215,18 +214,12 @@ def generate_location(
     loc_data["archived"] = False
     loc_data["is_live"] = True
     short_name = (
-        get_with_default(loc_data, "name")
-        if loc_data.get("name", None) is not None
-        else f"{loc_data.get('building', '')} {loc_data.get('street', '')}"
-    )
-    short_name = (
-        loc_data.get("name", None)
-        if loc_data.get("name", None) is not None
-        else f"{get_with_default(loc_data, 'building', '')} {get_with_default(loc_data, 'street', '')}"
+        loc_data.get("name")
+        if get_with_default(loc_data, "name", None) is not None
+        else f"{get_with_default(loc_data['address'], 'building', '')} {get_with_default(loc_data['address'], 'street', '')}".strip()
     )
     loc_data["short_name"] = short_name
     loc_data["icon_url"] = None  # TODO
-    db = FirebaseHelper.getInstance().db
 
     # Order the keys to create formatted_address
     order_of_keys = ["building", "street", "city", "county", "postal_code", "country"]
