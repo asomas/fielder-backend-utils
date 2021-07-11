@@ -1,8 +1,7 @@
-from typing import List, Iterator, Dict, Any, OrderedDict
+from typing import List, Iterator, Dict, Any
 from datetime import datetime, timedelta
-from google.cloud.firestore import DocumentReference, GeoPoint
 
-__version__ = "1.0.16"
+__version__ = "1.0.18"
 
 WEEKDAYS = [
     "monday",
@@ -189,6 +188,23 @@ def count_shift_hours(shift_pattern_data: dict):
     return shift_pattern_data.get(
         "total_shift_count", count_shift_days(shift_pattern_data)
     ) * ((shift_pattern_data["end_time"] - shift_pattern_data["start_time"]) / 3600)
+
+
+def unroll_shifts(shift_pattern_data) -> Iterator:
+    """
+    Return a iterator of shift pattern dates starting from start date.
+    Args:
+        shift_pattern_data: shift pattern data dict
+    Return:
+        next shift pattern date
+    """
+    assert isinstance(shift_pattern_data["start_date"], datetime)
+    assert isinstance(shift_pattern_data["end_date"], datetime)
+    current_date = shift_pattern_data["start_date"]
+    while current_date <= shift_pattern_data["end_date"]:
+        if matches_shift(current_date, shift_pattern_data):
+            yield current_date
+        current_date += timedelta(days=1)
 
 
 def get_with_default(dictionary, key, default_val):
