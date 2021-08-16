@@ -123,3 +123,27 @@ def get_company_data(
             )
 
     return company_data
+
+
+def get_company_number(api_key: str, name: str) -> str:
+    url = "https://api.company-information.service.gov.uk/search/companies"
+    response = requests.get(
+        url,
+        params={"q": name},
+        auth=(api_key, ""),
+    )
+    data = response.json()
+    company_number = None
+    items = data.get("items", [])
+    if len(items) > 1:
+        company = items[0]
+        company_number = (
+            company["company_number"]
+            if company.get("company_status", None)
+            not in [
+                None,
+                "dissolved",
+            ]
+            else None
+        )
+    return company_number
