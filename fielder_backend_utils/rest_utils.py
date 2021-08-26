@@ -61,6 +61,8 @@ class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if isinstance(obj, DocumentReference):
             return str(obj.path)
+        if isinstance(obj, GeoPoint):
+            return {"lat": obj.latitude, "lng": obj.longitude}
         return super().default(obj)
 
 
