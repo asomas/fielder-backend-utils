@@ -1,5 +1,5 @@
 import requests
-from firebase_admin.auth import UserInfo
+from requests.models import HTTPError
 
 
 class IntercomClient:
@@ -10,7 +10,7 @@ class IntercomClient:
     def __init__(self, access_token: str):
         self.headers = {"Authorization": "Bearer " + access_token}
 
-    def get_user(self, user_id: str) -> list[dict]:
+    def get_user(self, external_user_id: str) -> list[dict]:
         # Try to search a user by external_id i.e. Firestore document ID
         response = requests.post(
             "https://api.intercom.io/contacts/search",
@@ -18,7 +18,7 @@ class IntercomClient:
                 "query": {
                     "field": "external_id",
                     "operator": "=",
-                    "value": user_id,
+                    "value": external_user_id,
                 }
             },
             headers=self.headers,
@@ -44,6 +44,16 @@ class IntercomClient:
         if response.status_code == 200:
             return response.json()
         return response.raise_for_status()
+
+    def get_or_create_user(self, external_user_id: str, **kwargs) -> dict:
+        try:
+            user = self.get_user(external_user_id)[0]
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                user = self.create_user(external_user_id, **kwargs)
+            else:
+                raise e
+        return user
 
     def update_user(self, intercom_user_id: str, **kwargs) -> dict:
         payload = {}
@@ -98,7 +108,7 @@ class IntercomClient:
             return response.json()
         return response.raise_for_status()
 
-    def create_conversation(self, intercom_user_id: str, body: dict) -> dict:
+    def create_conversation(self, intercom_user_id: str, body: str) -> dict:
         response = requests.post(
             "https://api.intercom.io/conversations",
             json={
