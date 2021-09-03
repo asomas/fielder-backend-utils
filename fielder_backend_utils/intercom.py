@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import requests
 from requests.models import HTTPError
 
@@ -10,7 +12,7 @@ class IntercomClient:
     def __init__(self, access_token: str):
         self.headers = {"Authorization": "Bearer " + access_token}
 
-    def get_user(self, external_user_id: str) -> list[dict]:
+    def get_user(self, external_user_id: str) -> List[Dict]:
         # Try to search a user by external_id i.e. Firestore document ID
         response = requests.post(
             "https://api.intercom.io/contacts/search",
@@ -28,7 +30,7 @@ class IntercomClient:
 
         return response.raise_for_status()
 
-    def create_user(self, external_user_id: str, **kwargs) -> dict:
+    def create_user(self, external_user_id: str, **kwargs) -> Dict:
         payload = {
             "role": "user",
             "external_id": external_user_id,
@@ -45,7 +47,7 @@ class IntercomClient:
             return response.json()
         return response.raise_for_status()
 
-    def get_or_create_user(self, external_user_id: str, **kwargs) -> dict:
+    def get_or_create_user(self, external_user_id: str, **kwargs) -> Dict:
         try:
             user = self.get_user(external_user_id)[0]
         except HTTPError as e:
@@ -55,7 +57,7 @@ class IntercomClient:
                 raise e
         return user
 
-    def update_user(self, intercom_user_id: str, **kwargs) -> dict:
+    def update_user(self, intercom_user_id: str, **kwargs) -> Dict:
         payload = {}
         if kwargs:
             payload.update(kwargs)
@@ -69,7 +71,7 @@ class IntercomClient:
             return response.json()
         return response.raise_for_status()
 
-    def get_company(self, organisation_id: str) -> dict:
+    def get_company(self, organisation_id: str) -> Dict:
         response = requests.get(
             f"https://api.intercom.io/companies/{organisation_id}",
             headers=self.headers,
@@ -79,7 +81,7 @@ class IntercomClient:
 
         return response.raise_for_status()
 
-    def create_update_company(self, organisation_id: str, **kwargs) -> dict:
+    def create_update_company(self, organisation_id: str, **kwargs) -> Dict:
         payload = {
             "name": organisation_id,
         }
@@ -98,7 +100,7 @@ class IntercomClient:
 
     def add_user_to_company(
         self, intercom_user_id: str, intercom_company_id: str
-    ) -> dict:
+    ) -> Dict:
         response = requests.post(
             f"https://api.intercom.io/contacts/{intercom_user_id}/companies",
             json={"id": intercom_company_id},
@@ -108,7 +110,7 @@ class IntercomClient:
             return response.json()
         return response.raise_for_status()
 
-    def create_conversation(self, intercom_user_id: str, body: str) -> dict:
+    def create_conversation(self, intercom_user_id: str, body: str) -> Dict:
         response = requests.post(
             "https://api.intercom.io/conversations",
             json={
