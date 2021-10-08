@@ -49,7 +49,11 @@ class IntercomClient:
 
     def get_or_create_user(self, external_user_id: str, **kwargs) -> Dict:
         try:
-            user = self.get_user(external_user_id)[0]
+            users = self.get_user(external_user_id)
+            if users:
+                user = users[0]
+            else:
+                user = self.create_user(external_user_id, **kwargs)
         except HTTPError as e:
             if e.response.status_code == 404:
                 user = self.create_user(external_user_id, **kwargs)
