@@ -8,6 +8,7 @@ install_requires = [
     "pyparsing<3",
     "pyjwt>=2.0.0",
     "requests>=2.25.1",
+    "protobuf==3.17.3",
 ]
 
 setup(
