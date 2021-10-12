@@ -115,12 +115,12 @@ def mocked_requests_get(*args, **kwargs):
 
     if kwargs["params"]["key"] == "API_SECRET":
         if (
-            kwargs["params"]["place_id"] == "GOOGLE_PLACE_ID"
+            kwargs["params"].get("place_id", None) == "GOOGLE_PLACE_ID"
             and args[0] == "https://maps.googleapis.com/maps/api/place/details/json"
         ):
             return MockResponse(google_palce_api_response, 200)
         elif (
-            kwargs["params"]["formatted_address"]
+            kwargs["params"].get("formatted_address", None)
             == "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
             and args[0] == "https://maps.googleapis.com/maps/api/geocode/json"
         ):
