@@ -101,6 +101,7 @@ def geocode(formatted_address: str, googel_places_api_secret: str):
         "https://maps.googleapis.com/maps/api/geocode/json",
         params={
             "address": formatted_address,
+            "bounds": "49.383639452689664,-17.39866406249996|59.53530451232491,8.968523437500039",
             "key": googel_places_api_secret,
         },
     )
