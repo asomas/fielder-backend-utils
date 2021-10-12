@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, OrderedDict
 
 import requests
@@ -5,6 +6,8 @@ from google.cloud.firestore import DocumentReference, GeoPoint
 
 from fielder_backend_utils import get_with_default
 from fielder_backend_utils.rest_utils import log_response
+
+logger = logging.getLogger(__name__)
 
 
 def google_place_details(
@@ -17,7 +20,7 @@ def google_place_details(
             "key": googel_places_api_secret,
         },
     )
-    log_response(response)
+    log_response(logger, response)
 
     if not response.ok:
         return None
@@ -101,7 +104,7 @@ def geocode(formatted_address: str, googel_places_api_secret: str):
             "key": googel_places_api_secret,
         },
     )
-    log_response(response)
+    log_response(logger, response)
 
     if not response.ok:
         return None
