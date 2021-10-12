@@ -1,3 +1,6 @@
+from logging import Logger
+
+import requests
 from django.utils.translation import gettext_lazy as _
 from google.cloud.firestore import DocumentReference, GeoPoint
 from rest_framework import status
@@ -76,3 +79,18 @@ class Conflict(APIException):
 
 class CustomJSONRenderer(JSONRenderer):
     encoder_class = CustomJSONEncoder
+
+
+def log_response(logger: Logger, response: requests.Response):
+    try:
+        message = response.json()
+    except ValueError:
+        message = response.text
+    if 600 > response.status_code >= 400:
+        logger.error(
+            f"{response.status_code} error while connecting to {response.url}! reason={response.reason}, message = {message}"
+        )
+    elif 300 > response.status_code >= 200:
+        logger.info(
+            f"{response.status_code} success code while connecting {response.url}!, response = {message}"
+        )
