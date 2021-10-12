@@ -22,7 +22,7 @@ def google_place_details(
     )
     log_response(logger, response)
 
-    if not response.ok:
+    if not response.ok or response.json()["status"] != "OK":
         return None
 
     response = response.json()
@@ -106,7 +106,9 @@ def geocode(formatted_address: str, googel_places_api_secret: str):
     )
     log_response(logger, response)
 
-    if not response.ok:
+    if not response.ok or response.json()["status"] != "OK":
         return None
 
-    return response.json()["results"][0]["geometry"]["location"]
+    results = response.json()["results"]
+    if response.json()["results"]:
+        return response.json()["results"][0]["geometry"]["location"]
