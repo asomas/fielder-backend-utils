@@ -1,5 +1,12 @@
 from unittest import TestCase, mock
 
+import django
+from django.conf import settings
+
+if not settings.configured:
+    settings.configure()
+    django.setup()
+
 from fielder_backend_utils.location import *
 
 google_palce_api_response = {
@@ -104,11 +111,12 @@ geocode_api_response = {
 
 def mocked_requests_get(*args, **kwargs):
     class MockResponse:
-        def __init__(self, json_data, status_code):
+        def __init__(self, json_data, status_code, reason=None):
             self.json_data = json_data
             self.status_code = status_code
             self.url = args[0]
             self.ok = status_code == 200
+            self.reason = reason
 
         def json(self):
             return self.json_data
@@ -120,13 +128,13 @@ def mocked_requests_get(*args, **kwargs):
         ):
             return MockResponse(google_palce_api_response, 200)
         elif (
-            kwargs["params"].get("formatted_address", None)
+            kwargs["params"].get("address", None)
             == "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
             and args[0] == "https://maps.googleapis.com/maps/api/geocode/json"
         ):
             return MockResponse(geocode_api_response, 200)
-        return MockResponse(None, 404)
-    return MockResponse(None, 403)
+        return MockResponse(None, 404, reason="Not Found")
+    return MockResponse(None, 403, reason="Forbidden")
 
 
 class TestLocation(TestCase):
