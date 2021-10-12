@@ -1,4 +1,5 @@
 from unittest import TestCase, mock
+
 from fielder_backend_utils.location import *
 
 google_palce_api_response = {
@@ -54,6 +55,7 @@ def mocked_requests_get(*args, **kwargs):
         def __init__(self, json_data, status_code):
             self.json_data = json_data
             self.status_code = status_code
+            self.url = args[0]
 
         def json(self):
             return self.json_data
