@@ -8,11 +8,12 @@ install_requires = [
     "pyparsing<3",
     "pyjwt>=2.0.0",
     "requests>=2.25.1",
+    "protobuf==3.17.3",
 ]
 
 setup(
     name="fielder_backend_utils",
-    version="1.0.26",
+    version="1.0.28",
     description="Utilities for Fielder Backend",
     url="git@github.com:asomas/fielder-backend-utils",
     author="Sarmad Gulzar",

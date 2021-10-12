@@ -1,7 +1,13 @@
-from fielder_backend_utils import get_with_default
+import logging
 from typing import Any, Dict, OrderedDict
-from google.cloud.firestore import DocumentReference, GeoPoint
+
 import requests
+from google.cloud.firestore import DocumentReference, GeoPoint
+
+from fielder_backend_utils import get_with_default
+from fielder_backend_utils.rest_utils import log_response
+
+logger = logging.getLogger(__name__)
 
 
 def google_place_details(
@@ -13,43 +19,43 @@ def google_place_details(
             "place_id": place_id,
             "key": googel_places_api_secret,
         },
-    ).json()
+    )
+    log_response(logger, response)
 
-    if response["status"] == "OK":
-        name = response["result"]["name"]
-        info = response["result"]["address_components"]
-        building = [
-            _["long_name"]
-            for _ in info
-            if "street_number" in _["types"] or "premise" in _["types"]
-        ]
-        street = [_["long_name"] for _ in info if "route" in _["types"]]
-        city = [_["long_name"] for _ in info if "postal_town" in _["types"]]
-        administrative_areas_names = [
-            _["long_name"] for _ in info if "administrative_area_level_2" in _["types"]
-        ] + [
-            _["long_name"] for _ in info if "administrative_area_level_1" in _["types"]
-        ]
-        country = [_["long_name"] for _ in info if "country" in _["types"]]
-        postal_code = [_["long_name"] for _ in info if "postal_code" in _["types"]]
-
-        return {
-            "name": name,
-            "address": {
-                "building": building[0] if building else None,
-                "street": street[0] if street else None,
-                "city": city[0] if city else None,
-                "county": ", ".join(administrative_areas_names)
-                if administrative_areas_names
-                else None,
-                "country": country[0] if country else None,
-                "postal_code": postal_code[0] if postal_code else None,
-            },
-            "coords": response["result"]["geometry"]["location"],
-            "formatted_address": response["result"]["formatted_address"],
-        }
-    else:
+    if not response.ok or response.json()["status"] != "OK":
         return None
+
+    response = response.json()
+    name = response["result"]["name"]
+    info = response["result"]["address_components"]
+    building = [
+        _["long_name"]
+        for _ in info
+        if "street_number" in _["types"] or "premise" in _["types"]
+    ]
+    street = [_["long_name"] for _ in info if "route" in _["types"]]
+    city = [_["long_name"] for _ in info if "postal_town" in _["types"]]
+    administrative_areas_names = [
+        _["long_name"] for _ in info if "administrative_area_level_2" in _["types"]
+    ] + [_["long_name"] for _ in info if "administrative_area_level_1" in _["types"]]
+    country = [_["long_name"] for _ in info if "country" in _["types"]]
+    postal_code = [_["long_name"] for _ in info if "postal_code" in _["types"]]
+
+    return {
+        "name": name,
+        "address": {
+            "building": building[0] if building else None,
+            "street": street[0] if street else None,
+            "city": city[0] if city else None,
+            "county": ", ".join(administrative_areas_names)
+            if administrative_areas_names
+            else None,
+            "country": country[0] if country else None,
+            "postal_code": postal_code[0] if postal_code else None,
+        },
+        "coords": response["result"]["geometry"]["location"],
+        "formatted_address": response["result"]["formatted_address"],
+    }
 
 
 def generate_location(
@@ -88,3 +94,22 @@ def generate_location(
     )
 
     return loc_data
+
+
+def geocode(formatted_address: str, googel_places_api_secret: str):
+    response = requests.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        params={
+            "address": formatted_address,
+            "bounds": "49.383639452689664,-17.39866406249996|59.53530451232491,8.968523437500039",
+            "key": googel_places_api_secret,
+        },
+    )
+    log_response(logger, response)
+
+    if not response.ok or response.json()["status"] != "OK":
+        return None
+
+    results = response.json()["results"]
+    if response.json()["results"]:
+        return response.json()["results"][0]["geometry"]["location"]

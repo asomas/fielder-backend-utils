@@ -3,8 +3,9 @@ from unittest.case import TestCase
 import django
 from django.conf import settings
 
-settings.configure()
-django.setup()
+if not settings.configured:
+    settings.configure()
+    django.setup()
 
 from fielder_backend_utils.rest_utils import GeoPointField
 from google.cloud.firestore import GeoPoint
