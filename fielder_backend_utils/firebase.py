@@ -1,13 +1,19 @@
+import logging
 import os
 import threading
+from typing import Optional
+
 import firebase_admin
 import google.auth.credentials
-from datetime import datetime, timezone, timedelta
-from firebase_admin import firestore, auth
-from google.cloud.firestore_v1 import document, transaction, collection, field_path
+from firebase_admin import auth, firestore
+from firebase_admin.auth import (
+    UserNotFoundError,
+    UserRecord,
+    create_user,
+    get_user,
+    get_user_by_phone_number,
+)
 from google.cloud.firestore import Client
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -56,3 +62,28 @@ class FirebaseHelper:
         decoded_token = auth.verify_id_token(id_token)
         uid = decoded_token["uid"]
         return auth.get_user(uid)
+
+
+class FirebaseAuthService:
+    def __init__(self) -> None:
+        FirebaseHelper().getInstance()
+
+    def user_exists_via_phone(self, *, phone_number: str) -> bool:
+        try:
+            get_user_by_phone_number(phone_number)
+            return True
+        except UserNotFoundError:
+            return False
+
+    def get_last_login(self, *, user_id: str) -> Optional[int]:
+        try:
+            user: UserRecord = get_user(user_id)
+            return user.user_metadata.last_sign_in_timestamp
+        except UserNotFoundError:
+            pass
+
+    def create_user(self, *, phone_number: str, display_name: str = None) -> UserRecord:
+        kwargs = {"phone_number": phone_number}
+        if display_name != None:
+            kwargs["display_name"] = display_name
+        return create_user(**kwargs)
