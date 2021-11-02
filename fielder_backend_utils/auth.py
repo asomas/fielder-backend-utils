@@ -1,13 +1,15 @@
 import functools
 import logging
 import os
-from typing import Dict, List, Tuple
+from typing import List
 from unittest import mock
 
 import google.auth.transport.requests
 import google.oauth2.id_token
 import jwt
 from firebase_admin.auth import UserRecord
+from google.auth.transport.requests import Request
+from google.oauth2 import id_token
 from rest_framework.exceptions import (
     AuthenticationFailed,
     NotFound,
@@ -188,3 +190,9 @@ def auth_organisation_user(*, restricted_roles: List, firebase: bool, oidc: bool
         return wrapper
 
     return decorator
+
+
+def get_oidc_token(
+    audience: str = "https://www.googleapis.com/auth/cloud-platform.read-only",
+):
+    return id_token.fetch_id_token(Request(), audience)
