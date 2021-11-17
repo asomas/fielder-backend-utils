@@ -14,7 +14,7 @@ def get_sic_code_description(db, code):
 
 def get_directors(api_key, company_number):
     officers_response = requests.get(
-        f"https://api.company-information.service.gov.uk/company/{company_number}/officers",
+        f"https://autocomplete-dev.fielder.one/company_house/company/{company_number}/officers",
         auth=(api_key, ""),
     )
 
@@ -34,7 +34,7 @@ def get_directors(api_key, company_number):
 
 def get_last_filing_date(api_key, company_number):
     filing_history_response = requests.get(
-        f"https://api.company-information.service.gov.uk/company/{company_number}/filing-history",
+        f"https://autocomplete-dev.fielder.one/company_house/company/{company_number}/filing-history",
         auth=(api_key, ""),
     )
 
@@ -56,7 +56,7 @@ def get_company_data(
 ):
     company_data = {}
     response = requests.get(
-        f"https://api.company-information.service.gov.uk/company/{company_number}",
+        f"https://autocomplete-dev.fielder.one/company_house/company/{company_number}",
         auth=(api_key, ""),
     )
     if response.status_code == 200:
@@ -126,7 +126,7 @@ def get_company_data(
 
 
 def get_company_number(api_key: str, name: str) -> str:
-    url = "https://api.company-information.service.gov.uk/search/companies"
+    url = "https://autocomplete-dev.fielder.one/company_house/search/companies"
     response = requests.get(
         url,
         params={"q": name},
