@@ -68,6 +68,13 @@ class FirebaseAuthService:
     def __init__(self) -> None:
         FirebaseHelper().getInstance()
 
+    def user_exists(self, *, uid: str) -> bool:
+        try:
+            get_user(uid)
+            return True
+        except UserNotFoundError:
+            return False
+
     def user_exists_via_phone(self, *, phone_number: str) -> bool:
         try:
             get_user_by_phone_number(phone_number)
