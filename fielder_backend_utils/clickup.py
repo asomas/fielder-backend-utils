@@ -10,9 +10,11 @@ class ClickUpTask:
         *,
         name: str,
         description: str = None,
+        markdown_description: str = None,
     ) -> None:
         self.name = name
         self.description = description
+        self.markdown_description = markdown_description
 
     def to_dict(self) -> dict:
         return {
