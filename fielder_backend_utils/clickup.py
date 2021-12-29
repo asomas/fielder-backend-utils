@@ -3,7 +3,7 @@ from requests.models import Response
 
 
 class ClickUpTask:
-    allowed_fields = ["name", "description"]
+    allowed_fields = ["name", "description", "markdown_description"]
 
     def __init__(
         self,
