@@ -14,7 +14,7 @@ install_requires = [
 
 setup(
     name="fielder_backend_utils",
-    version="1.0.35",
+    version="1.0.36",
     description="Utilities for Fielder Backend",
     url="git@github.com:asomas/fielder-backend-utils",
     author="Sarmad Gulzar",

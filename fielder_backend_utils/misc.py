@@ -1,6 +1,7 @@
 import random
 import string
 from hashlib import sha256
+from urllib.parse import quote_plus
 
 import requests
 
@@ -71,3 +72,16 @@ def make_id(str_val, length, attempts_before_fallback=None):
         result = baseNEncode(hash_bytes_as_int, base=36)
         yield result[:length]
         input_bytes = h.digest()
+
+
+def get_retool_environment(server_mode: str) -> str:
+    env = ""
+    if server_mode.lower() == "prod":
+        env = "production"
+    elif server_mode.lower() == "dev":
+        env = "staging"
+    return env
+
+
+def get_worker_retool_link(retool_app_id: str, phone: str, server_mode: str) -> str:
+    return f"https://asomas.retool.com/apps/{retool_app_id}?phone={quote_plus(phone)}&_environment={get_retool_environment(server_mode)}"
