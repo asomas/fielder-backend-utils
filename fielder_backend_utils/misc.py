@@ -83,5 +83,10 @@ def get_retool_environment(server_mode: str) -> str:
     return env
 
 
-def get_worker_retool_link(retool_app_id: str, phone: str, server_mode: str) -> str:
-    return f"https://asomas.retool.com/apps/{retool_app_id}?phone={quote_plus(phone)}&_environment={get_retool_environment(server_mode)}"
+def get_worker_retool_link(
+    retool_app_id: str,
+    phone: str,
+    server_mode: str,
+    tab: int = 0,
+) -> str:
+    return f"https://asomas.retool.com/apps/{retool_app_id}?phone={quote_plus(phone)}&_environment={get_retool_environment(server_mode)}&tab={str(tab)}"
