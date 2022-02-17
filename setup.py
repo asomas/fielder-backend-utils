@@ -1,10 +1,13 @@
 from setuptools import setup
 
+from fielder_backend_utils import __version__
+
 install_requires = [
     "djangorestframework>=3.11.0",
     "firebase-admin==4.4.0",
     "google-cloud-firestore==2.2.0",
     "google-cloud-tasks==2.0.0",
+    "google-cloud-pubsub==2.2.0",
     "google-auth>=1.23.0,<2.0dev",
     "pyparsing<3",
     "pyjwt>=2.0.0",
@@ -14,7 +17,7 @@ install_requires = [
 
 setup(
     name="fielder_backend_utils",
-    version="1.0.39",
+    version=__version__,
     description="Utilities for Fielder Backend",
     url="git@github.com:asomas/fielder-backend-utils",
     author="Sarmad Gulzar",
