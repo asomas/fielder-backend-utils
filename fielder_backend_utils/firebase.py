@@ -1,7 +1,7 @@
 import logging
 import os
 import threading
-from typing import Optional
+from typing import Optional, Tuple
 
 import firebase_admin
 import google.auth.credentials
@@ -55,13 +55,12 @@ class FirebaseHelper:
                 db = firestore.client()
         self.db = db  # type: Client
 
-    def authenticate(self, id_token: str) -> auth.UserRecord:
+    def authenticate(self, id_token: str) -> Tuple[dict, auth.UserRecord]:
         """
         Verify id_token and retrieve user info
         """
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token["uid"]
-        return auth.get_user(uid)
+        data = auth.verify_id_token(id_token)
+        return (data, auth.get_user(data["uid"]))
 
 
 class FirebaseAuthService:

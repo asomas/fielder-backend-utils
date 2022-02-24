@@ -1,6 +1,7 @@
 import os
-import jwt
 from unittest import TestCase, mock
+
+import jwt
 from fielder_backend_utils import auth
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -9,7 +10,7 @@ class TestAuth(TestCase):
     @mock.patch("fielder_backend_utils.auth.FirebaseHelper")
     def test_auth_request_firebase(self, FirebaseHelperMock):
         firebase_mock = mock.Mock()
-        firebase_mock.authenticate.return_value = mock.Mock(uid="TEST_USER_UID")
+        firebase_mock.authenticate.return_value = ({}, mock.Mock(uid="TEST_USER_UID"))
         FirebaseHelperMock.getInstance.return_value = firebase_mock
 
         # no authorization header
@@ -20,13 +21,13 @@ class TestAuth(TestCase):
         # X-Forwarded-Authorization
         request = mock.Mock()
         request.headers = {"X-Forwarded-Authorization": "Bearer FIREBASE_TOKEN"}
-        user = auth.auth_request_firebase(request)
+        _, user = auth.auth_request_firebase(request)
         self.assertEqual(user.uid, "TEST_USER_UID")
 
         # Authorization
         request = mock.Mock()
         request.headers = {"Authorization": "Bearer FIREBASE_TOKEN"}
-        user = auth.auth_request_firebase(request)
+        _, user = auth.auth_request_firebase(request)
         self.assertEqual(user.uid, "TEST_USER_UID")
 
     @mock.patch("fielder_backend_utils.auth.google")
@@ -58,7 +59,7 @@ class TestAuth(TestCase):
         token = jwt.encode(payload, key="secret", algorithm="HS256")
         request = mock.Mock()
         request.headers = {"Authorization": "Bearer " + token}
-        user = auth.auth_request_firebase(request)
+        _, user = auth.auth_request_firebase(request)
         self.assertEqual(user.uid, payload["user_id"])
         self.assertEqual(user.phone_number, payload["phone_number"])
         self.assertEqual(user.email, payload["email"])
@@ -92,7 +93,7 @@ class TestAuth(TestCase):
     def test_auth_decorator(self, verify_oauth2_token_mock, FirebaseHelperMock):
         # mock
         firebase_mock = mock.Mock()
-        firebase_mock.authenticate.return_value = mock.Mock(uid="TEST_USER_UID")
+        firebase_mock.authenticate.return_value = ({}, mock.Mock(uid="TEST_USER_UID"))
         FirebaseHelperMock.getInstance.return_value = firebase_mock
 
         # dummy request
@@ -104,6 +105,7 @@ class TestAuth(TestCase):
         @auth.auth(firebase=False, oidc=False)
         def func1(r):
             return r
+
         req = Request()
         res = func1(req)
         self.assertEqual(res, req)
@@ -122,7 +124,7 @@ class TestAuth(TestCase):
         }
         oidc_token = jwt.encode(oidc_payload, key="secret", algorithm="HS256")
         req = Request()
-        req.headers['Authorization'] = f'Bearer {oidc_token}'
+        req.headers["Authorization"] = f"Bearer {oidc_token}"
         verify_oauth2_token_mock.return_value = oidc_payload
         res = func2(req)
         self.assertEquals(res.oidc_data, oidc_payload)
@@ -140,17 +142,20 @@ class TestAuth(TestCase):
         }
         firebase_token = jwt.encode(firebase_payload, key="secret", algorithm="HS256")
         req = Request()
-        req.headers['Authorization'] = f'Bearer {firebase_token}'
+        req.headers["Authorization"] = f"Bearer {firebase_token}"
         # verify_oauth2_token() will reject firebase token
         verify_oauth2_token_mock.side_effect = Exception()
         self.assertRaises(AuthenticationFailed, func3, req)
 
         # accept if both provided
         req = Request()
-        req.headers['X-Forwarded-Authorization'] = f'Bearer {firebase_token}'
-        req.headers['Authorization'] = f'Bearer {oidc_token}'
+        req.headers["X-Forwarded-Authorization"] = f"Bearer {firebase_token}"
+        req.headers["Authorization"] = f"Bearer {oidc_token}"
         # firebase.authenticate will return user object
-        firebase_mock.authenticate.return_value = mock.Mock(uid=firebase_payload["user_id"])
+        firebase_mock.authenticate.return_value = (
+            {},
+            mock.Mock(uid=firebase_payload["user_id"]),
+        )
         # verify_oauth2_token() will accept oidc token
         verify_oauth2_token_mock.side_effect = None
         verify_oauth2_token_mock.return_value = oidc_payload

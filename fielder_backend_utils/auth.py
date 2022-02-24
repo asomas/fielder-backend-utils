@@ -1,18 +1,17 @@
 import functools
 import logging
 import os
-from typing import List
+from typing import Tuple
 from unittest import mock
 
 import google.auth.transport.requests
 import google.oauth2.id_token
 import jwt
-from firebase_admin.auth import UserRecord
+from firebase_admin import auth
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from rest_framework.exceptions import (
     AuthenticationFailed,
-    NotFound,
     PermissionDenied,
     ValidationError,
 )
@@ -22,7 +21,7 @@ from .firebase import FirebaseHelper
 logger = logging.getLogger(__name__)
 
 
-def auth_request_firebase(request) -> UserRecord:
+def auth_request_firebase(request) -> Tuple[dict, auth.UserRecord]:
     """
     Authenticate firebase id_token and get firebase user
     Args:
@@ -44,7 +43,7 @@ def auth_request_firebase(request) -> UserRecord:
                 user.email = payload["email"]
             if "display_name" in payload:
                 user.display_name = payload["display_name"]
-            return user
+            return payload, user
         else:
             return firestore.authenticate(token)
     except Exception as e:
@@ -105,7 +104,7 @@ def auth(firebase: bool = True, oidc: bool = True):
 
             # authenticate
             if firebase:
-                req.firebase_user = auth_request_firebase(req)
+                _, req.firebase_user = auth_request_firebase(req)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 
@@ -117,49 +116,46 @@ def auth(firebase: bool = True, oidc: bool = True):
     return decorator
 
 
-def authorize(request, restricted_roles):
-    fs = FirebaseHelper.getInstance()
+def authorize(request, data: dict, org_role: str, group_role: str = None):
+    db = FirebaseHelper.getInstance()
 
     if "organisation_id" not in request.data:
         raise ValidationError({"organisation_id": ["This field is required."]})
 
-    organisation_ref = fs.db.collection("organisations").document(
-        request.data["organisation_id"]
-    )
-    organisation_snapshot = organisation_ref.get()
-    if not organisation_snapshot.exists:
-        raise NotFound(detail="Organisation not found.")
+    org_id = request.data["organisation_id"]
+    org = data.get("organisations", {}).get(org_id, {})
 
-    organisation_user_ref = fs.db.collection("organisation_users").document(
-        request.firebase_user.uid
-    )
+    if org.get("org_role") != org_role:
+        raise PermissionDenied()
 
-    organisation_user_snapshot = organisation_user_ref.get()
-    if not organisation_user_snapshot.exists:
-        raise NotFound(detail="Organisation User not found.")
+    if org_role == "GROUP_USER":
+        if "group_id" not in request.data:
+            raise ValidationError({"group_id": ["This field is required."]})
 
-    organisation_user_data = organisation_user_snapshot.to_dict()
-    organisations = organisation_user_data.get("organisations")
-    if (not isinstance(organisations, dict)) or (
-        not organisations.get(organisation_ref.id, None)
-    ):
-        raise PermissionDenied(detail="You are not part of this organisation.")
+        group_id = request.data["group_id"]
 
-    role = organisations[organisation_ref.id].get("role", None)
-    if (not role) or (role not in restricted_roles):
-        raise PermissionDenied(
-            detail="You don't have enough permission for that action."
-        )
+        if group_role not in ["MANAGER", "SUPERVISOR"]:
+            raise ValidationError(
+                {
+                    "group_role": [
+                        "A valid value for this field is required when org_role is GROUP_USER."
+                    ]
+                }
+            )
+
+        if org.get("g", {}).get(group_id, {}).get("group_role") != group_role:
+            raise PermissionDenied()
 
 
-def auth_organisation_user(*, restricted_roles: List, firebase: bool, oidc: bool):
+def auth_org_user(*, firebase: bool, oidc: bool, org_role: str, group_role: str = None):
     """
     Auth decorator that supports firebase and OIDC token
 
     Args:
-        restricted_roles (List): ["owner", "admin", "hr", "manager", "supervisor"]
         firebase (bool): if True, authenticate firebase token
         oidc (bool): if True, authenticate OIDC token
+        org_role (str)
+        group_role (str)
     """
 
     def decorator(req_handler):
@@ -179,8 +175,8 @@ def auth_organisation_user(*, restricted_roles: List, firebase: bool, oidc: bool
 
             # authenticate
             if firebase:
-                req.firebase_user = auth_request_firebase(req)
-                authorize(req, restricted_roles)
+                data, req.firebase_user = auth_request_firebase(req)
+                authorize(req, data, org_role, group_role=group_role)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 

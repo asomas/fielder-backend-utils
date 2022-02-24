@@ -134,3 +134,6 @@ local.py
 # ide
 .idea/
 .vscode/
+
+# Other
+.DS_Store
