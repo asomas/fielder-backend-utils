@@ -122,11 +122,12 @@ def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] 
 
     org_id = request.data["organisation_id"]
     org = data.get("organisations", {}).get(org_id, {})
+    org_role = org.get("org_role")
 
-    if org.get("org_role") not in org_roles:
+    if org_role not in org_roles:
         raise PermissionDenied()
 
-    if "GROUP_USER" in org_roles:
+    if org_role == "GROUP_USER":
         if "group_id" not in request.data:
             raise ValidationError({"group_id": ["This field is required."]})
 
