@@ -136,7 +136,9 @@ def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] 
             raise PermissionDenied()
 
 
-def auth_org_user(*, firebase: bool, oidc: bool, org_role: str, group_role: str = None):
+def auth_org_user(
+    *, firebase: bool, oidc: bool, org_roles: List[str], group_roles: List[str] = []
+):
     """
     Auth decorator that supports firebase and OIDC token
 
@@ -165,7 +167,7 @@ def auth_org_user(*, firebase: bool, oidc: bool, org_role: str, group_role: str 
             # authenticate
             if firebase:
                 data, req.firebase_user = auth_request_firebase(req)
-                authorize(req, data, org_role, group_role=group_role)
+                authorize(req, data, org_roles, group_roles=group_roles)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 
