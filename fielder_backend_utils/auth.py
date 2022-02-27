@@ -1,7 +1,7 @@
 import functools
 import logging
 import os
-from typing import Tuple
+from typing import List, Tuple
 from unittest import mock
 
 import google.auth.transport.requests
@@ -116,34 +116,23 @@ def auth(firebase: bool = True, oidc: bool = True):
     return decorator
 
 
-def authorize(request, data: dict, org_role: str, group_role: str = None):
-    db = FirebaseHelper.getInstance()
-
+def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] = []):
     if "organisation_id" not in request.data:
         raise ValidationError({"organisation_id": ["This field is required."]})
 
     org_id = request.data["organisation_id"]
     org = data.get("organisations", {}).get(org_id, {})
 
-    if org.get("org_role") != org_role:
+    if org.get("org_role") not in org_roles:
         raise PermissionDenied()
 
-    if org_role == "GROUP_USER":
+    if "GROUP_USER" in org_roles:
         if "group_id" not in request.data:
             raise ValidationError({"group_id": ["This field is required."]})
 
         group_id = request.data["group_id"]
 
-        if group_role not in ["MANAGER", "SUPERVISOR"]:
-            raise ValidationError(
-                {
-                    "group_role": [
-                        "A valid value for this field is required when org_role is GROUP_USER."
-                    ]
-                }
-            )
-
-        if org.get("g", {}).get(group_id, {}).get("group_role") != group_role:
+        if org.get("g", {}).get(group_id, {}).get("group_role") not in group_roles:
             raise PermissionDenied()
 
 
