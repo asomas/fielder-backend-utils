@@ -5,7 +5,7 @@ from fielder_backend_utils import __version__
 install_requires = [
     "djangorestframework>=3.11.0",
     "firebase-admin==5.2.0",
-    "google-cloud-firestore==2.3.4",
+    "google-cloud-firestore>=2.1.0,<2.2.0",
     "google-cloud-tasks==2.0.0",
     "google-cloud-pubsub==2.2.0",
     "google-auth>=1.23.0,<2.0dev",
