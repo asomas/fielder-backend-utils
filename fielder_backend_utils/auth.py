@@ -20,6 +20,11 @@ from .firebase import FirebaseHelper
 
 logger = logging.getLogger(__name__)
 
+ORG_ROLES_MAPPING = {"o": "OWNER", "a": "ADMIN", "g": "GROUP_USER"}
+GROUP_ROLES_MAPPING = {"m": "MANAGER", "s": "SUPERVISOR"}
+ORG_ROLES_MAPPING_REVERSED = {v: k for k, v in ORG_ROLES_MAPPING.items()}
+GROUP_ROLES_MAPPING_REVERSED = {v: k for k, v in GROUP_ROLES_MAPPING.items()}
+
 
 def auth_request_firebase(request) -> Tuple[dict, auth.UserRecord]:
     """
@@ -122,7 +127,7 @@ def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] 
 
     org_id = request.data["organisation_id"]
     org = data.get("organisations", {}).get(org_id, {})
-    org_role = org.get("org_role")
+    org_role = ORG_ROLES_MAPPING.get(org.get("r"))
 
     if org_role not in org_roles:
         raise PermissionDenied()
@@ -132,8 +137,9 @@ def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] 
             raise ValidationError({"group_id": ["This field is required."]})
 
         group_id = request.data["group_id"]
+        group_role = GROUP_ROLES_MAPPING.get(org.get("g", {}).get(group_id))
 
-        if org.get("g", {}).get(group_id, {}).get("group_role") not in group_roles:
+        if group_role not in group_roles:
             raise PermissionDenied()
 
 
