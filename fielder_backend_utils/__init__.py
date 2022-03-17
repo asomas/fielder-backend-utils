@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterator, List
 
-__version__ = "1.0.45"
+__version__ = "1.0.46"
 
 WEEKDAYS = [
     "monday",

@@ -1,9 +1,11 @@
+from typing import List
+
 import requests
 from requests.models import Response
 
 
 class ClickUpTask:
-    allowed_fields = ["name", "description", "markdown_description"]
+    allowed_fields = ["name", "description", "markdown_description", "custom_fields"]
 
     def __init__(
         self,
@@ -11,10 +13,12 @@ class ClickUpTask:
         name: str,
         description: str = None,
         markdown_description: str = None,
+        custom_fields: List[dict] = None,
     ) -> None:
         self.name = name
         self.description = description
         self.markdown_description = markdown_description
+        self.custom_fields = custom_fields
 
     def to_dict(self) -> dict:
         return {
