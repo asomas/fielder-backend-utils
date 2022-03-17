@@ -39,3 +39,42 @@ class ClickUpAPIHelper:
             json=task.to_dict(),
             headers={"Authorization": self.access_token},
         )
+
+    def get_task(
+        self, task_id: str, custom_task_ids: bool = False, team_id: int = None
+    ) -> Response:
+        if custom_task_ids == True and team_id is None:
+            raise Exception(
+                "If you want to reference a task by it's custom task id, team_id must be provided."
+            )
+        return requests.get(
+            self.base_url + f"/task/{task_id}",
+            params={"custom_task_ids": custom_task_ids, "team_id": team_id},
+            headers={"Authorization": self.access_token},
+        )
+
+    def update_task(
+        self,
+        task_id: str,
+        data: dict,
+        custom_task_ids: bool = False,
+        team_id: int = None,
+    ) -> Response:
+        if custom_task_ids == True and team_id is None:
+            raise Exception(
+                "If you want to reference a task by it's custom task id, team_id must be provided."
+            )
+        return requests.put(
+            self.base_url + f"/task/{task_id}",
+            params={"custom_task_ids": custom_task_ids, "team_id": team_id},
+            headers={"Authorization": self.access_token},
+        )
+
+    def set_task_status(
+        self,
+        task_id: str,
+        status: str,
+        custom_task_ids: bool = False,
+        team_id: int = None,
+    ) -> Response:
+        return self.update_task(task_id, {"status": status}, custom_task_ids, team_id)
