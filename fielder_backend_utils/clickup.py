@@ -66,6 +66,7 @@ class ClickUpAPIHelper:
             )
         return requests.put(
             self.base_url + f"/task/{task_id}",
+            json=data,
             params={"custom_task_ids": custom_task_ids, "team_id": team_id},
             headers={"Authorization": self.access_token},
         )
