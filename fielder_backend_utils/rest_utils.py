@@ -20,7 +20,7 @@ class DocumentReferenceField(Field):
     def to_internal_value(self, data):
         if not isinstance(data, DocumentReference):
             try:
-                if len(data.split("/")) == 2:
+                if len(data.split("/")) % 2 == 0:
                     return FirebaseHelper.getInstance().db.document(data)
                 else:
                     self.fail("invalid", value=data)
