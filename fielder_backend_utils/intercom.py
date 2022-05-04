@@ -138,7 +138,7 @@ class IntercomClient:
         response = requests.post(
             "https://api.intercom.io/messages",
             json={
-                "from": {"type": intercom_sender_type, "id": intercomer_sender_id},
+                "from": {"type": intercom_sender_type, "id": intercom_sender_id},
                 "to": {"type": "user", "id": intercom_recipient_id},
                 "message_type": "inapp",
                 "body": body,
