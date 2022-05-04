@@ -127,3 +127,25 @@ class IntercomClient:
             return response.json()
 
         return response.raise_for_status()
+
+    def send_message_to_user(
+        self,
+        intercom_sender_id: str,
+        intercom_recipient_id: str,
+        body: str,
+        intercom_sender_type="admin",
+    ) -> Dict:
+        response = requests.post(
+            "https://api.intercom.io/messages",
+            json={
+                "from": {"type": intercom_sender_type, "id": intercomer_sender_id},
+                "to": {"type": "user", "id": intercom_recipient_id},
+                "message_type": "inapp",
+                "body": body,
+            },
+            headers=self.headers,
+        )
+        if response.status_code == 200:
+            return response.json()
+
+        return response.raise_for_status()
