@@ -32,6 +32,24 @@ class DocumentReferenceField(Field):
         return value.path
 
 
+class RefToIDField(Field):
+    default_error_messages = {
+        "invalid": ("value is not a valid reference"),
+    }
+
+    def to_internal_value(self, data):
+        if isinstance(data, DocumentReference):
+            return data.id
+        else:
+            try:
+                if len(data.split("/")) > 1:
+                    return data.split("/").pop()
+                else:
+                    self.fail("invalid", value=data)
+            except (ValueError):
+                self.fail("invalid", value=data)
+
+
 class GeoPointField(Field):
     """
     A field that converts GeoPoint from and to JSON representation.
