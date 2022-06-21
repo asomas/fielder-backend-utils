@@ -5,6 +5,8 @@ from urllib.parse import quote_plus
 
 import requests
 
+from fielder_backend_utils.intercom import IntercomClient
+
 
 def create_clickup_task(task_title, list_id, token, task_description="n/a"):
     response = requests.post(
@@ -90,3 +92,11 @@ def get_worker_retool_link(
     tab: int = 0,
 ) -> str:
     return f"https://asomas.retool.com/apps/{retool_app_id}?phone={quote_plus(phone)}&_environment={get_retool_environment(server_mode)}&tab={str(tab)}"
+
+
+def get_worker_intercom_link(
+    intercom_access_token: str,
+    intercom_app_id: str,
+    worker_id: str,
+) -> str:
+    return f"https://app.intercom.com/a/apps/{intercom_app_id}/users/{IntercomClient(intercom_access_token).get_or_create_user(worker_id)['id']}"
