@@ -2,12 +2,15 @@ import json
 import logging
 import os
 from enum import Enum, auto
+from typing import Union
 
 import google.auth
 import google.auth.credentials
 from django.utils import timezone
 from google.cloud import pubsub_v1
+from google.cloud.firestore_v1.document import DocumentReference
 from rest_framework import serializers
+from rest_framework.request import Request
 
 from fielder_backend_utils.rest_utils import CustomJSONEncoder
 
@@ -65,13 +68,36 @@ def publish_event(topic: str, data: dict):
 
 def publish_fielder_event(
     *,
-    source: str,
-    resource: str,
+    source: Union[str, DocumentReference, Request],
+    resource: Union[str, DocumentReference],
+    organisation_ref: DocumentReference,
+    group_ref: DocumentReference,
     data: dict,
     event_id: FielderEvent,
 ):
-    print(source)
-    print(resource)
+    assert organisation_ref and group_ref, "organisation_ref and group_ref are required"
+
+    if isinstance(source, Request):
+        if source.firebase_user:
+            user_id = source.firebase_user.uid
+            if source.data.get("organisation_id"):
+                source = f"{FielderEventURIScheme.firestore.name}://organisation_users/{user_id}"
+            else:
+                source = f"{FielderEventURIScheme.firestore.name}://workers/{user_id}"
+        else:
+            source = source.build_absolute_uri()
+    elif isinstance(source, DocumentReference):
+        source = f"{FielderEventURIScheme.firestore.name}://{source.document_id}"
+
+    if isinstance(resource, DocumentReference):
+        resource = f"{FielderEventURIScheme.firestore.name}://{resource.path}"
+
+    logger.info(
+        f"Sending {FIELDER_EVENT_PUBSUB_TOPIC_NAME} {event_id.name}, source: {source}, resource: {resource}"
+    )
+
+    data["organisation_ref"] = organisation_ref
+    data["group_ref"] = group_ref
     ser = EventSerialzier(
         data={
             "source": source,
@@ -81,8 +107,8 @@ def publish_fielder_event(
         }
     )
     if not ser.is_valid():
-        logger.error(
-            f"Event failed, source: {source}, resource: {resource}, data: {str(data)}, event_id: {event_id.name}"
+        logger.exception(
+            f"Sending {FIELDER_EVENT_PUBSUB_TOPIC_NAME} {event_id.name} failed! source: {source}, resource: {resource}, data: {str(data)}"
         )
     else:
         publish_event(FIELDER_EVENT_PUBSUB_TOPIC_NAME, ser.validated_data)
