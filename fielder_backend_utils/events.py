@@ -87,7 +87,7 @@ def publish_fielder_event(
         else:
             source = source.build_absolute_uri()
     elif isinstance(source, DocumentReference):
-        source = f"{FielderEventURIScheme.firestore.name}://{source.document_id}"
+        source = f"{FielderEventURIScheme.firestore.name}://{source.path}"
 
     if isinstance(resource, DocumentReference):
         resource = f"{FielderEventURIScheme.firestore.name}://{resource.path}"
