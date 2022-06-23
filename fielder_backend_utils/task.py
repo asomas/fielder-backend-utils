@@ -15,6 +15,7 @@ def create_http_task(
     http_url: str,
     queue: str,
     queue_location: str,
+    audience: str,
     payload: Dict = None,
     http_method: str = "POST",
     scheduled_at: datetime = None,
@@ -45,6 +46,7 @@ def create_http_task(
             },
             "oidc_token": {
                 "service_account_email": service_account_email,
+                "audience": audience,
             },
         }
     }
