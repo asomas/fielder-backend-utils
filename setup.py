@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 from fielder_backend_utils import __version__
 
@@ -23,8 +23,8 @@ setup(
     author="Sarmad Gulzar",
     author_email="sarmad@asomas.ai",
     license="MIT",
-    packages=["fielder_backend_utils"],
     install_requires=install_requires,
     test_suite="tests",
     zip_safe=False,
+    packages=find_packages(),
 )
