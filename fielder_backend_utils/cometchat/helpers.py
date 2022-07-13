@@ -1,34 +1,16 @@
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import requests
+from requests import Response
 
-
-@dataclass
-class CometChatUser:
-    uid: str
-    name: str
-    link: Optional[str] = None
-    avatar: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
-    rawMetadata: Optional[str] = None
-    status: Optional[str] = None
-    role: Optional[str] = None
-    createdAt: Optional[int] = None
-    updatedAt: Optional[int] = None
-    tags: Optional[list[str]] = None
-    authToken: Optional[str] = None
-
-
-@dataclass
-class CometChatAuthToken:
-    uid: str
-    authToken: str
-    createdAt: int
-
-
-class CometChatException(Exception):
-    pass
+from .dataclasses import CometChatAuthToken, CometChatUser
+from .enums import CometChatErrorCodes
+from .exceptions import (
+    CometChatAuthTokenNotFoundException,
+    CometChatException,
+    CometChatUIDAlreadyExistsException,
+    CometChatUIDNotFoundException,
+)
 
 
 class CometChatHelper:
@@ -74,7 +56,7 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
         return CometChatUser(**response.json()["data"])
 
@@ -84,7 +66,7 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
         return CometChatUser(**response.json()["data"])
 
@@ -118,7 +100,7 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
         return CometChatUser(**response.json()["data"])
 
@@ -130,7 +112,7 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
     def create_auth_token(self, uid: str, force: bool = False) -> CometChatAuthToken:
         response = requests.post(
@@ -140,7 +122,7 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
         return CometChatAuthToken(**response.json()["data"])
 
@@ -151,6 +133,22 @@ class CometChatHelper:
         )
 
         if not response.ok:
-            raise CometChatException(response.text)
+            self._handle_bad_request(response)
 
         return CometChatAuthToken(**response.json()["data"])
+
+    def _handle_bad_request(self, response: Response) -> None:
+        code = response.json()["error"]["code"]
+        message = response.json()["error"]["message"]
+
+        if code == CometChatErrorCodes.ERR_UID_ALREADY_EXISTS.name:
+            raise CometChatUIDAlreadyExistsException(message)
+
+        elif code == CometChatErrorCodes.ERR_UID_NOT_FOUND.name:
+            raise CometChatUIDNotFoundException(message)
+
+        elif code == CometChatErrorCodes.ERR_AUTH_TOKEN_NOT_FOUND.name:
+            raise CometChatAuthTokenNotFoundException(message)
+
+        else:
+            raise CometChatException(response.text)
