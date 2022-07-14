@@ -1,3 +1,4 @@
+from base64 import b32decode, b32encode
 from typing import Optional
 
 import requests
@@ -152,3 +153,11 @@ class CometChatHelper:
 
         else:
             raise CometChatException(response.text)
+
+
+def encode_uid(uid: str) -> str:
+    return b32encode(uid.encode()).decode().lower().replace("=", "_")
+
+
+def decode_uid(uid: str) -> str:
+    return b32decode(uid.upper().replace("_", "=")).decode()
