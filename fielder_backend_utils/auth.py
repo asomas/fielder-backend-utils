@@ -121,22 +121,28 @@ def auth(firebase: bool = True, oidc: bool = True):
     return decorator
 
 
-def authorize(request, data: dict, org_roles: List[str], group_roles: List[str] = []):
-    if "organisation_id" not in request.data:
+def authorize(
+    payload_data: dict,
+    header_data: dict,
+    org_roles: List[str],
+    group_roles: List[str] = [],
+):
+    organisation_id = payload_data.get("organisation_id")
+    if not organisation_id:
         raise ValidationError({"organisation_id": ["This field is required."]})
 
-    org_id = request.data["organisation_id"]
-    org = data.get("organisations", {}).get(org_id, {})
+    org_id = payload_data["organisation_id"]
+    org = header_data.get("organisations", {}).get(org_id, {})
     org_role = ORG_ROLES_MAPPING.get(org.get("r"))
 
     if org_role not in org_roles:
         raise PermissionDenied()
 
     if org_role == "GROUP_USER":
-        if "group_id" not in request.data:
+        group_id = payload_data.get("group_id")
+        if not group_id:
             raise ValidationError({"group_id": ["This field is required."]})
 
-        group_id = request.data["group_id"]
         group_role = GROUP_ROLES_MAPPING.get(org.get("g", {}).get(group_id))
 
         if group_role not in group_roles:
@@ -174,7 +180,26 @@ def auth_org_user(
             # authenticate
             if firebase:
                 data, req.firebase_user = auth_request_firebase(req)
-                authorize(req, data, org_roles, group_roles=group_roles)
+                payload_data = {
+                    "organisation_id": kwargs.get("organisation_id")
+                    or req.data.get("organisation_id"),
+                    "group_id": kwargs.get("group_id") or req.data.get("group_id"),
+                }
+                if (
+                    kwargs.get("organisation_id") is not None
+                    and req.data.get("organisation_id") is not None
+                    and kwargs.get("organisation_id") != req.data.get("organisation_id")
+                ):
+                    raise PermissionDenied("organisation_id mismatch")
+                if (
+                    kwargs.get("group_id") is not None
+                    and req.data.get("group_id") is not None
+                    and kwargs.get("group_id") != req.data.get("group_id")
+                ):
+                    raise PermissionDenied("group_id mismatch")
+
+                authorize(payload_data, data, org_roles, group_roles=group_roles)
+
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 
