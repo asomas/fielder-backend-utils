@@ -99,4 +99,4 @@ def get_worker_intercom_link(
     intercom_app_id: str,
     worker_id: str,
 ) -> str:
-    return f"https://app.intercom.com/a/apps/{intercom_app_id}/users/{IntercomClient(intercom_access_token).get_or_create_user(worker_id)['id']}"
+    return f"https://app.intercom.com/a/apps/{intercom_app_id}/users/{IntercomClient(intercom_access_token).get_user(worker_id)['id']}"
