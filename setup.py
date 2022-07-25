@@ -11,6 +11,7 @@ install_requires = [
     "google-auth>=1.23.0,<2.0dev",
     "pyparsing<3",
     "pyjwt>=2.0.0",
+    "lxml==4.6.4",
     "requests>=2.25.1",
     "protobuf==3.19.0",
 ]

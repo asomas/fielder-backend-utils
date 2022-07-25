@@ -3,9 +3,11 @@ from logging import Logger
 import requests
 from django.utils.translation import gettext_lazy as _
 from google.cloud.firestore import DocumentReference, GeoPoint
+from lxml.html.clean import Cleaner
+from lxml.html.defs import safe_attrs
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from rest_framework.fields import Field
+from rest_framework.fields import CharField, Field
 from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.encoders import JSONEncoder
 
@@ -112,3 +114,12 @@ def log_response(logger: Logger, response: requests.Response):
         logger.info(
             f"{response.status_code} success code while connecting {response.url}!, response = {message}"
         )
+
+
+class CleanHTMLField(CharField):
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        return Cleaner(
+            scripts=True,
+            safe_attrs=safe_attrs | set(["style"]),
+        ).clean_html(data)
