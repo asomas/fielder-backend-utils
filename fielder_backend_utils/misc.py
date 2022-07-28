@@ -94,9 +94,5 @@ def get_worker_retool_link(
     return f"https://asomas.retool.com/apps/{retool_app_id}?phone={quote_plus(phone)}&_environment={get_retool_environment(server_mode)}&tab={str(tab)}"
 
 
-def get_worker_intercom_link(
-    intercom_access_token: str,
-    intercom_app_id: str,
-    worker_id: str,
-) -> str:
-    return f"https://app.intercom.com/a/apps/{intercom_app_id}/users/{IntercomClient(intercom_access_token).get_user(worker_id)['id']}"
+def get_worker_intercom_link(intercom_app_id: str, worker_id: str) -> str:
+    return f"https://app.intercom.com/apps/{intercom_app_id}/users/show?user_id={worker_id}"
