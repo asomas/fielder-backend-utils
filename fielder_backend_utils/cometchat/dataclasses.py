@@ -14,6 +14,7 @@ class CometChatUser:
     role: Optional[str] = None
     createdAt: Optional[int] = None
     updatedAt: Optional[int] = None
+    lastActiveAt: Optional[int] = None
     tags: Optional[list[str]] = None
     authToken: Optional[str] = None
 
