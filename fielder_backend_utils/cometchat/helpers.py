@@ -1,4 +1,5 @@
 from base64 import b32decode, b32encode
+from copy import deepcopy
 from typing import Optional
 
 import requests
@@ -8,7 +9,9 @@ from .dataclasses import CometChatAuthToken, CometChatUser
 from .enums import CometChatErrorCodes
 from .exceptions import (
     CometChatAuthTokenNotFoundException,
+    CometChatBadRequestException,
     CometChatException,
+    CometChatOnBehalfOfUIDNotFoundException,
     CometChatUIDAlreadyExistsException,
     CometChatUIDNotFoundException,
 )
@@ -115,6 +118,28 @@ class CometChatHelper:
         if not response.ok:
             self._handle_bad_request(response)
 
+    def send_text_message(
+        self, text: str, sender_uid: str, receiver_uids: list[str]
+    ) -> None:
+        if len(receiver_uids) > 0:
+            payload = {
+                "receiverType": "user",
+                "category": "message",
+                "type": "text",
+                "data": {"text": text},
+                "multipleReceivers": {"uids": receiver_uids},
+            }
+
+            headers = deepcopy(self.default_headers)
+            headers.update({"onBehalfOf": sender_uid})
+
+            response = requests.post(
+                self.base_url + "/messages", json=payload, headers=headers
+            )
+
+            if not response.ok:
+                self._handle_bad_request(response)
+
     def create_auth_token(self, uid: str, force: bool = False) -> CometChatAuthToken:
         response = requests.post(
             self.base_url + f"/users/{uid}/auth_tokens",
@@ -150,6 +175,12 @@ class CometChatHelper:
 
         elif code == CometChatErrorCodes.ERR_AUTH_TOKEN_NOT_FOUND.name:
             raise CometChatAuthTokenNotFoundException(message)
+
+        elif code == CometChatErrorCodes.ERR_ON_BEHALF_OF_UID_NOT_FOUND.name:
+            raise CometChatOnBehalfOfUIDNotFoundException(message)
+
+        elif code == CometChatErrorCodes.ERR_BAD_REQUEST.name:
+            raise CometChatBadRequestException(message)
 
         else:
             raise CometChatException(response.text)

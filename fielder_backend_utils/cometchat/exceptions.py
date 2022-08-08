@@ -12,3 +12,11 @@ class CometChatUIDNotFoundException(CometChatException):
 
 class CometChatAuthTokenNotFoundException(CometChatException):
     pass
+
+
+class CometChatOnBehalfOfUIDNotFoundException(CometChatException):
+    pass
+
+
+class CometChatBadRequestException(CometChatException):
+    pass
