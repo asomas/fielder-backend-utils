@@ -119,14 +119,21 @@ class CometChatHelper:
             self._handle_bad_request(response)
 
     def send_text_message(
-        self, text: str, sender_uid: str, receiver_uids: list[str]
+        self,
+        text: str,
+        sender_uid: str,
+        receiver_uids: list[str],
+        metadata: Optional[dict] = dict(),
     ) -> None:
         if len(receiver_uids) > 0:
             payload = {
                 "receiverType": "user",
                 "category": "message",
                 "type": "text",
-                "data": {"text": text},
+                "data": {
+                    "text": text,
+                    "metadata": metadata,
+                },
                 "multipleReceivers": {"uids": receiver_uids},
             }
 
