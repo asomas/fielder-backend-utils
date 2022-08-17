@@ -35,5 +35,4 @@ def _make_wrapped_batch_method(name):
 for name, _ in inspect.getmembers(WriteBatch, predicate=inspect.isfunction):
     if name.startswith("_") or name == "commit":
         continue
-    print("setting", name)
     setattr(MultiBatch, name, _make_wrapped_batch_method(name))
