@@ -101,18 +101,14 @@ class CustomJSONRenderer(JSONRenderer):
     encoder_class = CustomJSONEncoder
 
 
-def log_response(logger: Logger, response: requests.Response):
+def log_response(logger: Logger, response: requests.Response, payload: dict = None):
     try:
         message = response.json()
     except ValueError:
         message = response.text
     if 600 > response.status_code >= 400:
         logger.error(
-            f"{response.status_code} error while connecting to {response.url}! reason={response.reason}, message = {message}"
-        )
-    elif 300 > response.status_code >= 200:
-        logger.info(
-            f"{response.status_code} success code while connecting {response.url}!, response = {message}"
+            f"{response.status_code} error while connecting to {response.url}! payload={str(payload)} reason={response.reason}, message = {message}"
         )
 
 
