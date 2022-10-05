@@ -7,7 +7,7 @@ from lxml.html.clean import Cleaner
 from lxml.html.defs import safe_attrs
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from rest_framework.fields import CharField, Field
+from rest_framework.fields import CharField, EmailField, Field
 from rest_framework.renderers import JSONRenderer
 from rest_framework.utils.encoders import JSONEncoder
 
@@ -32,6 +32,11 @@ class DocumentReferenceField(Field):
 
     def to_representation(self, value):
         return value.path
+
+
+class LowercaseEmailField(EmailField):
+    def to_internal_value(self, data):
+        return super().to_internal_value(data.lower())
 
 
 class RefToIDField(Field):
