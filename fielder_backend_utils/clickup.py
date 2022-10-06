@@ -53,6 +53,13 @@ class ClickUpAPIHelper:
             headers={"Authorization": self.access_token},
         )
 
+    def set_custom_field(self, task_id: str, field_id: str, value: str) -> Response:
+        return requests.post(
+            self.base_url + f"/task/{task_id}/field/{field_id}",
+            json={"value": value},
+            headers={"Authorization": self.access_token},
+        )
+
     def update_task(
         self,
         task_id: str,
