@@ -30,6 +30,7 @@ URI_REGEX = rf"({'|'.join(FielderEventURIScheme._member_names_)})://([\w_-]+(?:(
 class FielderEvent(Enum):
     interview_scheduled = auto()
     interview_cancelled = auto()
+    upcoming_interview = auto()
     invitation_status_changed = auto()
     offer_status_changed = auto()
     completed_shift_awaiting_approval = auto()
