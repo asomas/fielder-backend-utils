@@ -93,3 +93,11 @@ class FirebaseAuthService:
         if display_name != None:
             kwargs["display_name"] = display_name
         return create_user(**kwargs)
+
+    def get_or_create_user_by_phone_number(
+        self, phone_number: str
+    ) -> Tuple[bool, UserRecord]:
+        try:
+            return False, get_user_by_phone_number(phone_number)
+        except UserNotFoundError:
+            return True, create_user(phone_number=phone_number)
