@@ -7,7 +7,7 @@ from unittest import mock
 import google.auth.transport.requests
 import google.oauth2.id_token
 import jwt
-from firebase_admin import auth
+from firebase_admin.auth import UserRecord
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from rest_framework.exceptions import (
@@ -26,7 +26,7 @@ ORG_ROLES_MAPPING_REVERSED = {v: k for k, v in ORG_ROLES_MAPPING.items()}
 GROUP_ROLES_MAPPING_REVERSED = {v: k for k, v in GROUP_ROLES_MAPPING.items()}
 
 
-def auth_request_firebase(request) -> Tuple[dict, auth.UserRecord]:
+def auth_request_firebase(request, allow_anonymous=False) -> Tuple[dict, UserRecord]:
     """
     Authenticate firebase id_token and get firebase user
     Args:
@@ -50,7 +50,10 @@ def auth_request_firebase(request) -> Tuple[dict, auth.UserRecord]:
                 user.display_name = payload["display_name"]
             return payload, user
         else:
-            return firestore.authenticate(token)
+            token_data, user = firestore.authenticate(token)
+            if not allow_anonymous and not user.provider_data:
+                raise PermissionDenied("Anonymous users are not allowed")
+            return token_data, user
     except Exception as e:
         logger.warning(e)
         raise AuthenticationFailed(detail="invalid firebase authentication header")
@@ -83,7 +86,7 @@ def auth_request_oidc(request) -> dict:
         raise AuthenticationFailed(detail="invalid oidc authorization header")
 
 
-def auth(firebase: bool = True, oidc: bool = True):
+def auth(firebase: bool = True, oidc: bool = True, allow_anonymous=False):
     """
     Auth decorator that supports firebase and OIDC token
 
@@ -109,7 +112,7 @@ def auth(firebase: bool = True, oidc: bool = True):
 
             # authenticate
             if firebase:
-                _, req.firebase_user = auth_request_firebase(req)
+                _, req.firebase_user = auth_request_firebase(req, allow_anonymous)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
 
@@ -150,7 +153,12 @@ def authorize(
 
 
 def auth_org_user(
-    *, firebase: bool, oidc: bool, org_roles: List[str], group_roles: List[str] = []
+    *,
+    firebase: bool,
+    oidc: bool,
+    org_roles: List[str],
+    group_roles: List[str] = [],
+    allow_anonymous: bool = False
 ):
     """
     Auth decorator that supports firebase and OIDC token
@@ -179,7 +187,7 @@ def auth_org_user(
 
             # authenticate
             if firebase:
-                data, req.firebase_user = auth_request_firebase(req)
+                data, req.firebase_user = auth_request_firebase(req, allow_anonymous)
                 payload_data = {
                     "organisation_id": kwargs.get("organisation_id")
                     or req.data.get("organisation_id"),
