@@ -12,6 +12,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from rest_framework.exceptions import (
     AuthenticationFailed,
+    NotAuthenticated,
     PermissionDenied,
     ValidationError,
 )
@@ -52,7 +53,7 @@ def auth_request_firebase(request, allow_anonymous=False) -> Tuple[dict, UserRec
         else:
             token_data, user = firestore.authenticate(token)
             if not allow_anonymous and not user.provider_data:
-                raise PermissionDenied("Anonymous users are not allowed")
+                raise NotAuthenticated("Anonymous users are not allowed")
             return token_data, user
     except Exception as e:
         logger.warning(e)
