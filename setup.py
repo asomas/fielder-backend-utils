@@ -19,6 +19,7 @@ install_requires = [
     "pyjwt~=2.6.0",
     "pyparsing~=3.0.9",
     "python-i18n~=0.3.9",
+    "PyYAML==6.0",
     "requests~=2.28.1",
     "sentry-sdk~=1.9.10",
 ]
