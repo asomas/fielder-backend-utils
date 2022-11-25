@@ -56,6 +56,8 @@ def auth_request_firebase(request, allow_anonymous=False) -> Tuple[dict, UserRec
                 raise NotAuthenticated("Anonymous users are not allowed")
             return token_data, user
     except Exception as e:
+        if isinstance(e, NotAuthenticated):
+            raise e
         logger.warning(e)
         raise AuthenticationFailed(detail="invalid firebase authentication header")
 
