@@ -62,6 +62,34 @@ def auth_request_firebase(request, allow_anonymous=False) -> Tuple[dict, UserRec
         raise AuthenticationFailed(detail="invalid firebase authentication header")
 
 
+def auth_request_external_oidc(request) -> Tuple[dict, UserRecord]:
+    """
+    Authenticate external forwarded oidc tokens (e.g. oath2 tokens)
+    Args:
+        request (Request): DRF request
+    """
+    try:
+        if os.getenv("ASOMAS_SERVER_MODE", "").lower() in ["local", "test"]:
+            if "Authorization" in request.headers:
+                token = request.headers["Authorization"].split(" ").pop()
+            else:
+                # {"email": "fielder-emulator@appspot.gserviceaccount.com"}
+                token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImZpZWxkZXItZW11bGF0b3JAYXBwc3BvdC5nc2VydmljZWFjY291bnQuY29tIn0.PRDpQejYLbKTSrkXsq_LxjF_u_LeeQJpKB_1o1h7jqo"
+            return jwt.decode(token, options={"verify_signature": False})
+        else:
+            if "X-Forwarded-Authorization" in request.headers:
+                token = request.headers["X-Forwarded-Authorization"].split(" ").pop()
+            else:
+                raise AuthenticationFailed(
+                    detail="forwarded authorization header not found!"
+                )
+            req = google.auth.transport.requests.Request()
+            return google.oauth2.id_token.verify_oauth2_token(token, req)
+    except Exception as e:
+        logger.warning(e)
+        raise AuthenticationFailed(detail="invalid oidc authorization header")
+
+
 def auth_request_oidc(request) -> dict:
     """
     Authenticate oidc id_token and get jwt info as dict
@@ -89,13 +117,16 @@ def auth_request_oidc(request) -> dict:
         raise AuthenticationFailed(detail="invalid oidc authorization header")
 
 
-def auth(firebase: bool = True, oidc: bool = True, allow_anonymous=False):
+def auth(
+    firebase: bool = True, oidc: bool = True, external_oidc=False, allow_anonymous=False
+):
     """
     Auth decorator that supports firebase and OIDC token
 
     Args:
         firebase (bool): if True, authenticate firebase token
         oidc (bool): if True, authenticate OIDC token
+        external_oidc (bool): if True, authenticate external forwarded OIDC token
     """
 
     def decorator(req_handler):
@@ -118,6 +149,8 @@ def auth(firebase: bool = True, oidc: bool = True, allow_anonymous=False):
                 _, req.firebase_user = auth_request_firebase(req, allow_anonymous)
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
+            if external_oidc:
+                req.oidc_data = auth_request_external_oidc(req)
 
             # run req_handler
             return req_handler(*args, **kwargs)

@@ -2,8 +2,9 @@ import os
 from unittest import TestCase, mock
 
 import jwt
-from fielder_backend_utils import auth
 from rest_framework.exceptions import AuthenticationFailed
+
+from fielder_backend_utils import auth
 
 
 class TestAuth(TestCase):
@@ -46,6 +47,33 @@ class TestAuth(TestCase):
         request = mock.Mock()
         request.headers = {"Authorization": "Bearer OIDC_TOKEN"}
         token_data = auth.auth_request_oidc(request)
+        self.assertEqual(token_data["email"], "fielder@appspot.gserviceaccount.com")
+
+    @mock.patch("fielder_backend_utils.auth.google")
+    def test_auth_request_external_oidc(self, google_mock):
+        google_mock.auth.transport.requests.Request.return_value = mock.Mock()
+        google_mock.oauth2.id_token.verify_oauth2_token.return_value = {
+            "email": "fielder@appspot.gserviceaccount.com"
+        }
+
+        # no authorization header
+        request = mock.Mock()
+        request.headers = {"X-Someting-Else": "something-else"}
+        self.assertRaises(
+            AuthenticationFailed, auth.auth_request_external_oidc, request
+        )
+
+        # no forwarded header
+        request = mock.Mock()
+        request.headers = {"Authorization": "Bearer OIDC_TOKEN"}
+        self.assertRaises(
+            AuthenticationFailed, auth.auth_request_external_oidc, request
+        )
+
+        # Authorization
+        request = mock.Mock()
+        request.headers = {"X-Forwarded-Authorization": "Bearer FIREBASE_TOKEN"}
+        token_data = auth.auth_request_external_oidc(request)
         self.assertEqual(token_data["email"], "fielder@appspot.gserviceaccount.com")
 
     @mock.patch("fielder_backend_utils.auth.FirebaseHelper")
