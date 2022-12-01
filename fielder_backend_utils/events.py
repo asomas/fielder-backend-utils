@@ -35,6 +35,7 @@ class FielderEvent(Enum):
     offer_status_changed = auto()
     completed_shift_awaiting_approval = auto()
     late_shift_clockin = auto()
+    unread_message_notification = auto()
 
 
 class EventSerialzier(serializers.Serializer):
