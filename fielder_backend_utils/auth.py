@@ -21,11 +21,6 @@ from .firebase import FirebaseHelper
 
 logger = logging.getLogger(__name__)
 
-ORG_ROLES_MAPPING = {"o": "OWNER", "a": "ADMIN", "g": "GROUP_USER"}
-GROUP_ROLES_MAPPING = {"m": "MANAGER", "s": "SUPERVISOR"}
-ORG_ROLES_MAPPING_REVERSED = {v: k for k, v in ORG_ROLES_MAPPING.items()}
-GROUP_ROLES_MAPPING_REVERSED = {v: k for k, v in GROUP_ROLES_MAPPING.items()}
-
 
 def auth_request_firebase(request, allow_anonymous=False) -> Tuple[dict, UserRecord]:
     """
@@ -162,17 +157,27 @@ def auth(
 
 def authorize(
     payload_data: dict,
-    header_data: dict,
+    organisation_user_id: str,
     org_roles: List[str],
     group_roles: List[str] = [],
 ):
+    db = FirebaseHelper.getInstance().db
+
     organisation_id = payload_data.get("organisation_id")
     if not organisation_id:
         raise ValidationError({"organisation_id": ["This field is required."]})
 
-    org_id = payload_data["organisation_id"]
-    org = header_data.get("organisations", {}).get(org_id, {})
-    org_role = ORG_ROLES_MAPPING.get(org.get("r"))
+    # Read from organisation_user_relations collection
+    org_user_relation = (
+        db.collection("organisation_user_relations")
+        .document(f"{organisation_id}_{organisation_user_id}")
+        .get()
+    )
+
+    if not org_user_relation.exists:
+        raise PermissionDenied()
+
+    org_role = org_user_relation.to_dict().get("org_role")
 
     if org_role not in org_roles:
         raise PermissionDenied()
@@ -182,7 +187,17 @@ def authorize(
         if not group_id:
             raise ValidationError({"group_id": ["This field is required."]})
 
-        group_role = GROUP_ROLES_MAPPING.get(org.get("g", {}).get(group_id))
+        # Read from group_org_user_relations collection
+        group_org_user_relation = (
+            db.collection("group_org_user_relations")
+            .document(f"{organisation_id}_{group_id}_{organisation_user_id}")
+            .get()
+        )
+
+        if not group_org_user_relation.exists:
+            raise PermissionDenied()
+
+        group_role = group_org_user_relation.to_dict().get("group_role")
 
         if group_role not in group_roles:
             raise PermissionDenied()
@@ -194,7 +209,7 @@ def auth_org_user(
     oidc: bool,
     org_roles: List[str],
     group_roles: List[str] = [],
-    allow_anonymous: bool = False
+    allow_anonymous: bool = False,
 ):
     """
     Auth decorator that supports firebase and OIDC token
@@ -242,7 +257,12 @@ def auth_org_user(
                 ):
                     raise PermissionDenied("group_id mismatch")
 
-                authorize(payload_data, data, org_roles, group_roles=group_roles)
+                authorize(
+                    payload_data,
+                    req.firebase_user.uid,
+                    org_roles,
+                    group_roles=group_roles,
+                )
 
             if oidc:
                 req.oidc_data = auth_request_oidc(req)
